@@ -1,0 +1,4 @@
+interface:
+  display_name: "Slack Agent Team"
+  short_description: "Connect everyday assistants and project teams in Slack"
+  default_prompt: "Use $slack-agent-team to connect my assistants using available desktop access, shared context, and verified Slack handoffs."

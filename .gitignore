@@ -1,0 +1,10 @@
+# Keep filled operational records and credentials outside this package.
+.DS_Store
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+private/
+local/
+*.log

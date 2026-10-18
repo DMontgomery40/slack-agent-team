@@ -1,0 +1,381 @@
+{
+  "schema": "slack-agent-team-planning-v2",
+  "status": "template-not-provisioned",
+  "desktop_access_assumption": "authorized-for-requested-setup-subject-to-actual-tool-controls",
+  "purpose": "Plan the week with a personal assistant and a research helper; no repository required",
+  "use_case": "personal",
+  "human_owners": [
+    "REQUIRED_OWNER"
+  ],
+  "repository": null,
+  "slack": {
+    "workspace_id": "REQUIRED_WORKSPACE_ID",
+    "channels": [
+      {
+        "id": "REQUIRED_CHANNEL_ID",
+        "privacy": "REQUIRED_AUDIENCE_DECISION",
+        "purpose": "REQUIRED_PURPOSE"
+      }
+    ]
+  },
+  "context": {
+    "project_context_index": null,
+    "personal_shared_memory": "REQUIRED_PRIVATE_LOCATION/SHARED_MEMORY.md",
+    "allowed_readers": [
+      "personal-assistant",
+      "research-helper"
+    ],
+    "allowed_writers": [
+      "REQUIRED_DESIGNATED_MEMORY_WRITER"
+    ],
+    "source_revision": null,
+    "serialization_owner": "INFER_EXISTING_OPERATOR_OR_FIRST_SETUP_AGENT",
+    "participant_revision_receipts": []
+  },
+  "agents": [
+    {
+      "id": "personal-assistant",
+      "display_name": "Assistant",
+      "job": "Prepare a weekly plan from permitted notes",
+      "owner_ref": "REQUIRED_OWNER",
+      "kind": "REQUIRED_ASSISTANT_DOT_BOT_SESSION_OR_AUTOMATION",
+      "route": "REQUIRED_NATIVE_SESSION_API_DESKTOP_CONNECTOR_CUSTOM_OR_MANUAL",
+      "product": "REQUIRED_ACTUAL_PRODUCT",
+      "model": {
+        "id": null,
+        "reason": "Record only when exposed",
+        "provider": null,
+        "model_fallback": "explicit-only",
+        "provider_fallback": "REQUIRED_IF_APPLICABLE"
+      },
+      "session": {
+        "ref": null,
+        "generation": 1,
+        "continuity_policy": "verify-existing-session-before-dispatch",
+        "on_missing": "mark-unavailable-reconcile-before-replacement"
+      },
+      "capabilities": {
+        "read": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        },
+        "receive": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        },
+        "wake": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        },
+        "continue": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        },
+        "reply": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        },
+        "act": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        }
+      },
+      "slack": {
+        "app_id": null,
+        "bot_user_id": null,
+        "bot_id": null,
+        "allowed_channel_ids": [
+          "REQUIRED_CHANNEL_ID"
+        ],
+        "supported_surfaces": [],
+        "peer_sender_status": "untested",
+        "effective_status": "planning-only"
+      },
+      "resources": [
+        {
+          "kind": "calendar",
+          "access": "read",
+          "owner_ref": "REQUIRED_OWNER",
+          "sharing": "availability-only-when-authorized"
+        }
+      ],
+      "authority": {
+        "context_from": "REQUIRED_ALLOWED_SENDERS",
+        "assignments_from": "REQUIRED_HUMANS_OR_DESIGNATED_LEAD",
+        "allowed_actions": "REQUIRED_EXISTING_AUTHORIZATION",
+        "external_send_policy": "within-explicit-user-authorization"
+      },
+      "availability": {
+        "mode": "REQUIRED_HOSTED_INTERACTIVE_DESKTOP_OR_MANUAL",
+        "owner": "REQUIRED_OPERATOR",
+        "dependencies": []
+      },
+      "skills": {
+        "pstack": {
+          "status": "pending",
+          "source_ref": null,
+          "resolved_commit": null,
+          "load_method": null,
+          "acceptance_evidence": null,
+          "available_skills": [],
+          "dependency_receipts": [],
+          "known_gaps": [],
+          "load_persistence": "REQUIRED_INSTALLED_PERSISTENT_OR_REDELIVERED_PER_TASK"
+        }
+      },
+      "subscriptions": [
+        {
+          "schema": "slack-agent-team-subscription-planning-v1",
+          "workspace_id": "REQUIRED_WORKSPACE_ID",
+          "channel_id": "REQUIRED_CHANNEL_ID",
+          "participant_id": "personal-assistant",
+          "session_ref": "REQUIRED_SESSION_OR_VENDOR_REFERENCE",
+          "desired_mode": "follow-assigned-work",
+          "effective_mode": null,
+          "status": "planning-not-applied",
+          "actual_control_ref": "REQUIRED_SUPPORTED_UI_TOOL_OR_RUNTIME_CONFIG",
+          "effective_from": null,
+          "cursor_ref": null,
+          "allowed_context_senders": [],
+          "assignment_authority": [],
+          "surfaces": {
+            "top_level": "untested",
+            "threads": "untested",
+            "dms": "not-selected"
+          },
+          "reply_policy": "selective-no-routine-ack",
+          "model_attention_policy": "context-buffered",
+          "quiet_hours": "REQUIRED_PREFERENCE",
+          "on_narrow": "drop-newly-ineligible-queued-context-preserve-authorized-active-work",
+          "on_widen": "start-at-effective-boundary-unless-bounded-catchup-requested",
+          "other_routes_checked": false,
+          "verification_evidence": [],
+          "note": "Planning record only; translate into actual runner configuration and verify readback and delivery.",
+          "attention_policy_options": [
+            "context-buffered",
+            "wake-on-role-relevant",
+            "wake-every-message"
+          ],
+          "positive_receive_evidence": null,
+          "negative_delivery_evidence": null
+        }
+      ],
+      "credentials": [
+        {
+          "id": "personal-assistant-credential",
+          "kind": "REQUIRED_BOT_APP_LEVEL_SIGNING_PROVIDER_OR_RESOURCE",
+          "secret_ref": "REQUIRED_EXTERNAL_SECRET_REFERENCE_OR_VENDOR_MANAGED",
+          "ownership_scope": "persistent-assistant",
+          "owner_ref": "REQUIRED_OWNER",
+          "workspace_id": null,
+          "installation_ref": null,
+          "participant_ids": [
+            "personal-assistant"
+          ],
+          "allowed_purpose": "REQUIRED_SCOPE",
+          "refresh_rotation": {
+            "method": "REQUIRED_SUPPORTED_FLOW_OR_NOT_APPLICABLE",
+            "owner_ref": "REQUIRED_OPERATOR"
+          },
+          "retirement": {
+            "condition": "REQUIRED_CONDITION",
+            "dedicated": null,
+            "check_remaining_dependents_before_revocation": true
+          },
+          "status": "template-not-provisioned",
+          "note": "Reference metadata only; omit inapplicable custom credentials for managed products, explaining the vendor-owned flow."
+        }
+      ]
+    },
+    {
+      "id": "research-helper",
+      "display_name": "Assistant",
+      "job": "Research options from shared constraints",
+      "owner_ref": "REQUIRED_OWNER",
+      "kind": "REQUIRED_ASSISTANT_DOT_BOT_SESSION_OR_AUTOMATION",
+      "route": "REQUIRED_NATIVE_SESSION_API_DESKTOP_CONNECTOR_CUSTOM_OR_MANUAL",
+      "product": "REQUIRED_ACTUAL_PRODUCT",
+      "model": {
+        "id": null,
+        "reason": "Record only when exposed",
+        "provider": null,
+        "model_fallback": "explicit-only",
+        "provider_fallback": "REQUIRED_IF_APPLICABLE"
+      },
+      "session": {
+        "ref": null,
+        "generation": 1,
+        "continuity_policy": "verify-existing-session-before-dispatch",
+        "on_missing": "mark-unavailable-reconcile-before-replacement"
+      },
+      "capabilities": {
+        "read": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        },
+        "receive": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        },
+        "wake": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        },
+        "continue": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        },
+        "reply": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        },
+        "act": {
+          "status": "untested",
+          "evidence": null,
+          "checked_at": null
+        }
+      },
+      "slack": {
+        "app_id": null,
+        "bot_user_id": null,
+        "bot_id": null,
+        "allowed_channel_ids": [
+          "REQUIRED_CHANNEL_ID"
+        ],
+        "supported_surfaces": [],
+        "peer_sender_status": "untested",
+        "effective_status": "planning-only"
+      },
+      "resources": [
+        {
+          "kind": "web",
+          "access": "read",
+          "sharing": "public-source-results"
+        }
+      ],
+      "authority": {
+        "context_from": "REQUIRED_ALLOWED_SENDERS",
+        "assignments_from": "REQUIRED_HUMANS_OR_DESIGNATED_LEAD",
+        "allowed_actions": "REQUIRED_EXISTING_AUTHORIZATION",
+        "external_send_policy": "within-explicit-user-authorization"
+      },
+      "availability": {
+        "mode": "REQUIRED_HOSTED_INTERACTIVE_DESKTOP_OR_MANUAL",
+        "owner": "REQUIRED_OPERATOR",
+        "dependencies": []
+      },
+      "skills": {
+        "pstack": {
+          "status": "pending",
+          "source_ref": null,
+          "resolved_commit": null,
+          "load_method": null,
+          "acceptance_evidence": null,
+          "available_skills": [],
+          "dependency_receipts": [],
+          "known_gaps": [],
+          "load_persistence": "REQUIRED_INSTALLED_PERSISTENT_OR_REDELIVERED_PER_TASK"
+        }
+      },
+      "subscriptions": [
+        {
+          "schema": "slack-agent-team-subscription-planning-v1",
+          "workspace_id": "REQUIRED_WORKSPACE_ID",
+          "channel_id": "REQUIRED_CHANNEL_ID",
+          "participant_id": "research-helper",
+          "session_ref": "REQUIRED_SESSION_OR_VENDOR_REFERENCE",
+          "desired_mode": "follow-assigned-work",
+          "effective_mode": null,
+          "status": "planning-not-applied",
+          "actual_control_ref": "REQUIRED_SUPPORTED_UI_TOOL_OR_RUNTIME_CONFIG",
+          "effective_from": null,
+          "cursor_ref": null,
+          "allowed_context_senders": [],
+          "assignment_authority": [],
+          "surfaces": {
+            "top_level": "untested",
+            "threads": "untested",
+            "dms": "not-selected"
+          },
+          "reply_policy": "selective-no-routine-ack",
+          "model_attention_policy": "context-buffered",
+          "quiet_hours": "REQUIRED_PREFERENCE",
+          "on_narrow": "drop-newly-ineligible-queued-context-preserve-authorized-active-work",
+          "on_widen": "start-at-effective-boundary-unless-bounded-catchup-requested",
+          "other_routes_checked": false,
+          "verification_evidence": [],
+          "note": "Planning record only; translate into actual runner configuration and verify readback and delivery.",
+          "attention_policy_options": [
+            "context-buffered",
+            "wake-on-role-relevant",
+            "wake-every-message"
+          ],
+          "positive_receive_evidence": null,
+          "negative_delivery_evidence": null
+        }
+      ],
+      "credentials": [
+        {
+          "id": "research-helper-credential",
+          "kind": "REQUIRED_BOT_APP_LEVEL_SIGNING_PROVIDER_OR_RESOURCE",
+          "secret_ref": "REQUIRED_EXTERNAL_SECRET_REFERENCE_OR_VENDOR_MANAGED",
+          "ownership_scope": "persistent-assistant",
+          "owner_ref": "REQUIRED_OWNER",
+          "workspace_id": null,
+          "installation_ref": null,
+          "participant_ids": [
+            "research-helper"
+          ],
+          "allowed_purpose": "REQUIRED_SCOPE",
+          "refresh_rotation": {
+            "method": "REQUIRED_SUPPORTED_FLOW_OR_NOT_APPLICABLE",
+            "owner_ref": "REQUIRED_OPERATOR"
+          },
+          "retirement": {
+            "condition": "REQUIRED_CONDITION",
+            "dedicated": null,
+            "check_remaining_dependents_before_revocation": true
+          },
+          "status": "template-not-provisioned",
+          "note": "Reference metadata only; omit inapplicable custom credentials for managed products, explaining the vendor-owned flow."
+        }
+      ]
+    }
+  ],
+  "coordination": {
+    "topology": "REQUIRED_DIRECT_OR_COORDINATOR",
+    "task_system": null,
+    "handoff_contract": "handoff.example.json",
+    "max_handoffs": 3,
+    "max_concurrent_tasks": 1,
+    "max_model_turns": 10,
+    "max_replies": 6,
+    "max_task_seconds": 900,
+    "limits_status": "starter-per-task-bounds-adapt-within-existing-authorization",
+    "spend_limit": "existing-authorized-quota-only-no-new-paid-spend",
+    "spend_status": "inspect-and-preserve-existing-account-limits",
+    "timezone": "INFER_USER_ACCOUNT_THEN_HOST_TIMEZONE",
+    "quiet_hours": "preserve-existing-otherwise-unset",
+    "expired_work": "revalidate-before-action"
+  },
+  "operations": {
+    "owner": "REQUIRED_OPERATOR",
+    "inspect_pause_cancel": "REQUIRED_SUPPORTED_CONTROLS",
+    "recovery": "REQUIRED_PROCEDURE",
+    "retention_deletion": "REQUIRED_POLICY",
+    "evidence_record": "acceptance.md"
+  },
+  "field_policy": "Planning contract, not a runtime schema. Use null with a reason for inapplicable or vendor-hidden fields. Secret references only. No raw credentials or private context in the public package.",
+  "credential_inventory_ref": "PRIVATE_SETUP_LOCATION/credentials.json"
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "slack-agent-team-subscription-planning-v1",
+  "workspace_id": "REQUIRED_WORKSPACE_ID",
+  "channel_id": "REQUIRED_CHANNEL_ID",
+  "participant_id": "REQUIRED_PARTICIPANT",
+  "session_ref": "REQUIRED_SESSION_OR_VENDOR_REFERENCE",
+  "desired_mode": "follow-conversation",
+  "effective_mode": null,
+  "status": "planning-not-applied",
+  "actual_control_ref": "REQUIRED_SUPPORTED_UI_TOOL_OR_RUNTIME_CONFIG",
+  "effective_from": null,
+  "cursor_ref": null,
+  "allowed_context_senders": [],
+  "assignment_authority": [],
+  "surfaces": {
+    "top_level": "untested",
+    "threads": "untested",
+    "dms": "not-selected"
+  },
+  "reply_policy": "selective-no-routine-ack",
+  "model_attention_policy": "context-buffered",
+  "quiet_hours": "REQUIRED_PREFERENCE",
+  "on_narrow": "drop-newly-ineligible-queued-context-preserve-authorized-active-work",
+  "on_widen": "start-at-effective-boundary-unless-bounded-catchup-requested",
+  "other_routes_checked": false,
+  "verification_evidence": [],
+  "note": "Planning record only; translate into actual runner configuration and verify readback and delivery.",
+  "attention_policy_options": [
+    "context-buffered",
+    "wake-on-role-relevant",
+    "wake-every-message"
+  ],
+  "positive_receive_evidence": null,
+  "negative_delivery_evidence": null
+}
