@@ -28,7 +28,7 @@ def event(ts='1.001',text='The review packet is blue.',user=HUMAN,**extra):
     return dict(dict(team=TEAM,channel=CHANNEL,user=user,ts=ts,text=text),**extra)
 
 def bid_of(prompt):return prompt.split('Batch ID: ')[1].split('\n')[0]
-def rev_of(prompt):return prompt.split('Shared team context revision: ')[1].split()[0]
+def rev_of(prompt):return None  # prompts no longer carry a context checksum
 
 class LabCase(unittest.TestCase):
     patches={}

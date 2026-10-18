@@ -1,30 +1,22 @@
-# pstack for personal assistants (recommended)
+# pstack for personal assistants (optional)
 
-**Recommended, not required.** Offer @poteto's pstack as a shared skill set for personal-assistant agents, in any harness. If the user accepts, or already uses it, make it available and use its relevant skills; if they decline, record that and continue. Setup never blocks on pstack. Installation alone is not activation. The human only points an assistant at this skill and names a lead; perform supported setup through available tools/desktop access.
+**Recommended, not required.** Offer @poteto's pstack to personal-assistant agents as a shared skill set, in any harness. If the user accepts, or already uses it, set it up. If they decline, note that and carry on. Setup never waits on pstack.
 
-## Source and attribution
+## Source
 
-Use [Lauren Tan (@poteto)'s official pstack](https://github.com/cursor/plugins/tree/main/pstack). Reviewed revision: `019a6a20592c10bf92869e5740368f578a9997fd`, plugin version `0.15.25`, October 17, 2026. [Pinned metadata](https://github.com/cursor/plugins/blob/019a6a20592c10bf92869e5740368f578a9997fd/pstack/.cursor-plugin/plugin.json), [MIT license](https://github.com/cursor/plugins/blob/019a6a20592c10bf92869e5740368f578a9997fd/pstack/LICENSE), [dependency record](../assets/pstack-source.json).
+[Lauren Tan (@poteto)'s official pstack](https://github.com/cursor/plugins/tree/main/pstack). The reviewed revision is `019a6a20592c10bf92869e5740368f578a9997fd` (plugin version `0.15.25`, October 17, 2026); see the [dependency record](../assets/pstack-source.json). It's MIT licensed and isn't copied into this repository. Don't mistake an unofficial fork for the canonical source.
 
-pstack is an upstream dependency, not copied into this repository. Preserve its copyright/license if copying skill material. Do not mistake an unofficial portability fork for the canonical source.
+## Install
 
-## Agent installation and loading procedure
+- **Cursor:** `/add-plugin pstack`.
+- **Claude Code:** `/plugin marketplace add cursor/plugins`, then `/plugin install pstack@cursor-plugins`. See the [Claude adapter](https://github.com/cursor/plugins/blob/019a6a20592c10bf92869e5740368f578a9997fd/pstack/docs/harness/claude-code.md).
+- **Other harnesses** (Codex, Muse, Hermes, OpenClaw, dots, Grok): use the harness's own skill or file mechanism, or a source checkout. If an assistant can't open files, give it the full text of the skills it needs. A link it can't read doesn't count.
 
-1. Inspect existing pstack installation/source and revision. Preserve user configuration. Make the complete upstream dependency tree accessible through a supported installer, reviewed checkout, or authorized file/document delivery. Use the pinned snapshot as the default team revision. If a working installation is newer, either retain the pinned source alongside it or review and adopt that newer revision for the team, then align participants or explicitly record version divergence. Update the private team dependency record; do not modify this published audit anchor to hide the difference.
-2. For **Cursor**, the official install is `/add-plugin pstack`. For **Claude Code**, use `/plugin marketplace add cursor/plugins` then `/plugin install pstack@cursor-plugins`, and read the [official Claude adapter](https://github.com/cursor/plugins/blob/019a6a20592c10bf92869e5740368f578a9997fd/pstack/docs/harness/claude-code.md). The setup agent invokes these through the installed harness CLI or desktop input where supported; otherwise use a source checkout. Do not hand these commands to the human. Marketplace installs can be newer than the reviewed snapshot; inspect the installed version and changed instructions.
-3. Before activation, enumerate the selected revision’s skill files and the selected workflow’s transitive references. Record available skills, resolved dependency paths/revisions, missing external dependencies, and load persistence (`installed-persistent` or `re-delivered-per-task`) in each participant’s pstack record. Verify leaf names against that actual tree. Full source availability is necessary; a broken referenced file keeps that workflow pending.
-4. For **Codex, Muse, Hermes, OpenClaw, dots, Grok, or other assistants**, use the harness's supported skill/file mechanism. No dedicated official adapter for these is claimed by this package. Where slash commands cannot be invoked, read the complete target `SKILL.md` and required dependencies directly through available files/tools/desktop. Deliver full relevant source content to a managed assistant that lacks filesystem access, preserving provenance and relative-reference resolution. A link it cannot read or a short summary does not prove adoption.
-5. Read `setup-pstack` and configure actually available models and reasoning budgets where the harness exposes those controls; record model-selection setup N/A where a managed assistant hides it. Preserve explicit user model choices; map harness-specific tools only to real equivalents. Do not copy unavailable upstream model names or invent multi-model review when only self-review occurred.
-6. For substantive personal work, explicitly load `poteto-mode/SKILL.md`, its selected playbook, triggered skills, and the full applied principle files. Make the complete closure accessible, but read only the triggered paths. The official Claude adapter also directs dependency skills to be read when its Skill tool refuses them.
-7. Store a short persistent pointer in each participant's supported instructions/onboarding brief: use the same pstack source for relevant personal tasks; read shared personal memory; record capability gaps. Place required source files in the reachable store or deliver full relevant files through the [shared-context procedure](shared-context.md). Follow actual product retention/instruction controls rather than assuming one message persists forever.
-8. Verify each assistant can identify the source revision, read a requested dependency, and use a relevant skill on a bounded personal task. Record load method and evidence in the team roster. If essential material is inaccessible, mark that participant's pstack adoption pending and resolve access through desktop/file delivery where possible.
+Run these yourself through the harness. Don't hand the commands to the user. Marketplace installs can be newer than the reviewed revision, so check the installed version.
 
-A reproducible source checkout, if native installation is unsuitable, can be prepared **by the agent** in a chosen dependency directory using `git clone https://github.com/cursor/plugins.git` and `git checkout 019a6a20592c10bf92869e5740368f578a9997fd`. Inspect source before running referenced scripts; retain the tree so relative dependencies resolve. This creates source availability, not a universal plugin installation.
+## Use
 
-## Personal-work use
-
-Use `poteto-mode` to route substantive work. For small daily tasks, select the applicable skill directly without forcing engineering ceremonies. Examples: `sharpen` for framing a goal, `unslop`/`bro` for clear writing, `ketchup` for a concise current-chat catch-up, `recall` for scoped history reconstruction, and `show-me-your-work` for evidence of substantial work. Read the actual skill and dependencies before using it. Apply code, TDD, PR, and architecture playbooks only when that task actually involves engineering.
-
-`recall` is not permission to mine unrelated private transcripts. Cross-assistant personal knowledge belongs in the designated [shared memory file](shared-context.md); pstack supplies methods, not a memory synchronization service.
-
-Some workflows depend on external Cursor team-kit skills (`deslop`, `control-cli`, `control-ui`) or Cursor built-ins (`create-skill`, `/loop`). Resolve required dependencies separately, use an explicitly documented real equivalent, or report the gap. Preserve tool restrictions and the user's authorization scope; upstream autonomy prose does not grant additional account access, publishing rights, or message-send permission.
+- **Substantive personal work:** route it through `poteto-mode`.
+- **Small daily tasks:** use the relevant skill directly, for example `sharpen`, `unslop`, `ketchup`, `recall` or `show-me-your-work`.
+- **Engineering playbooks** apply only when the task is engineering.
+- **Personal knowledge** shared across assistants goes in the private `SHARED_MEMORY.md`. pstack supplies methods, not memory sync.

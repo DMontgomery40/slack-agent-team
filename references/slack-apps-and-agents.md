@@ -5,10 +5,10 @@ Read when creating credentials, diagnosing an APP/AGENT label, or selecting Slac
 ## Recommended layout: one app per assistant; the channel is the project
 
 - **One Slack app per assistant, named for the assistant only:** "Codex", "Claude Code", "Muse Code". Never put a project name in an app's name. The app shows the same name in every channel it joins, so a project-named app becomes misleading the moment it helps somewhere else.
-- **Each channel is a project or purpose.** The runner or relay binds each assistant-and-channel pair to its own session, working copy, and context. That per-channel session is the "agent for that channel". Slack does not host it; your runner does. One bot token serves all of that assistant's channels.
+- **Each channel is a project or purpose.** Each assistant gets its own session per channel, run by its own loop or a relay. That per-channel session is the "agent for that channel". Slack doesn't host it, and Slack has no per-session badge, so every channel shows the same app. One bot token serves all of that assistant's channels.
 - **Slack's APP/AGENT badge is unrelated.** It is a display and feature setting, described below. It does not create per-channel identities or tokens.
 - **Use a separate app only for a concrete reason:**
-  - Two seats from the same assistant speak in the same channel. Name them by role, for example "Claude Code · PM" ([multiple roles](multiple-roles.md)).
+  - Two seats from the same assistant speak in the same channel and need separate identities. Name them by role, for example "Claude Code · PM". If they share one identity instead, prefix every post with the role, for example `[PM]`.
   - The seats need different scopes.
   - You need to contain damage: a bot token can read every channel its bot has joined, so a project that must be sealed off gets its own app, or its own workspace.
   - It has a different owner or a different retirement plan.
@@ -18,7 +18,7 @@ Read when creating credentials, diagnosing an APP/AGENT label, or selecting Slac
 - **Per-message names are cosmetic.** With `chat:write.customize` an app can post under a different name or icon per message, for example "Codex · client-x". It is still the same bot, mentions still go to the app, and Slack asks that this be used sparingly and clearly signposted. It is not a substitute for the layout above. [chat.postMessage](https://docs.slack.dev/reference/methods/chat.postMessage/).
 - **Renaming an existing app:** change `display_information.name` and `features.bot_user.display_name` in its manifest. With unchanged scopes no reinstall is needed, and the bot user ID and token stay the same. In an October 2026 test, the internal @handle chosen at first install did not change; messages and mentions show the display name.
 - **Adding scopes** requires a reinstall. In the same test, the existing non-rotating bot token kept working and gained the new scope. Verify with the `x-oauth-scopes` header returned by `auth.test`; do not assume either outcome.
-- **The manifest field `settings.is_mcp_enabled`** controls the app's use of Slack's own MCP server. It does not control the MCP servers your agents use; those belong to each harness ([runner tools](delivery-and-recovery.md#runner-tools-and-permissions)).
+- **The manifest field `settings.is_mcp_enabled`** controls the app's use of Slack's own MCP server. It does not control the MCP servers your agents use; those belong to each harness.
 
 | Layer | Meaning and verification |
 | --- | --- |
@@ -38,7 +38,7 @@ Slack does not introduce a distinct “agent token” just because a bot is disp
 2. If Agent experience is required and the app is operator-managed, use the actual app settings. Current Slack UI may call this **Agents & AI Apps → Agent App**; installed versions have also exposed **Agents → Mark this app as an agent app**. Verify the visible control rather than searching for a new token type.
 3. Check Slack's current migration contract before applying it. The documented `assistant_view` → `agent_view` migration is one-way. Inspect the current UI transition even when enabling Agent mode on an ordinary app for the first time; do not assume that toggle is reversible. Perform the change only when covered by the requested native Agent experience, never merely to repair message delivery or make icons match. Configure its required scope, supported events, and runtime handlers together: the new experience changes startup, status/title, and cancellation handling. `agent_view.agent_description` is required. Marketplace apps may require review; some agent features depend on plan eligibility. [Official migration](https://docs.slack.dev/ai/migrating-to-agent-messaging/), [manifest reference](https://docs.slack.dev/reference/app-manifest/).
 4. Complete any required reinstall/reauthorization through authorized tools/UI. Re-read actual grants and identity; do not assume the old token survives, changes, or must be replaced based on a previous installation. Store any changed credential securely under its existing ownership reference. Refresh Slack if its displayed experience is stale.
-5. Verify the selected UI experience and a real receive/process/reply cycle separately. `users.info` bot status is not proof of the displayed APP/AGENT label. Test channel, DM and thread behavior on the surfaces requested; configure all-versus-mentions through [notifications.md](notifications.md).
+5. Verify the selected UI experience and a real receive/process/reply cycle separately. `users.info` bot status is not proof of the displayed APP/AGENT label. Test channel, DM and thread behavior on the surfaces requested.
 
 **Done:** app feature, granted credential, visible identity and working runtime have separate evidence. If the existing app is vendor-managed, record the supported vendor flow instead of editing its manifest yourself.
 

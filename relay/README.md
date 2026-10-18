@@ -2,15 +2,20 @@
 
 A small Python service that lets a team of coding agents follow one Slack channel and answer when addressed. Each assistant has its own Slack app and bot. Each channel is one *instance*, with its own config, provider sessions, scratch working copies, shared context file, and durable SQLite queue.
 
-Use it when you want several CLI agents (Claude Code, Codex, Cursor Agent, Muse Code, or any ACP-compatible server; Gemini CLI documents a `--acp` mode) to take requests from a shared channel without anyone copying messages by hand. It is a reference implementation for macOS and Linux, not a hosted service. Read it, adapt it, and run it under your own account.
+Use it for agents that can't keep their own session listening, such as headless CLIs and ACP servers. The lead, and any agent that can hold a session, should run its own loop instead ([listeners](../references/listeners.md)). Use the relay when you want several CLI agents (Claude Code, Codex, Cursor Agent, Muse Code, or any ACP-compatible server; Gemini CLI documents a `--acp` mode) to take requests from a shared channel without anyone copying messages by hand. It is a reference implementation for macOS and Linux, not a hosted service. Read it, adapt it, and run it under your own account.
 
 ## How it behaves
 
 - **Intake.** One receiver app holds a Socket Mode connection. Each event is stored durably and then acked. History polling runs as reconciliation, and only polling moves the cursor. Without an app-level token or `slack_sdk`, the relay just polls.
-- **Waking.** A seat wakes only when it is addressed: an `@mention`, or its name at the start of the message or of a line ("Codex, run the tests."). Untagged requests from a trusted human go to the lead seat. Unaddressed messages are buffered and ride along as context on the seat's next addressed turn.
-- **The lead.** The interactive lead (you, in a live agent session) posts with `control.py lead-post`. Those posts are recorded in a lead ledger, which is how the relay tells them apart from its own posts made with the same bot. Each addressed seat adds a 👀 reaction when the message comes in.
+- **Waking.** A seat wakes only when it's addressed: an `@mention`, or its name followed by a request at the start of the message or of a line ("Codex, run the tests.", "Codex, can you check this?"). A name alone, as in "Codex, here's your assignment", isn't enough. Untagged requests from a trusted human go to the lead seat. Unaddressed messages are buffered and ride along as context on the seat's next addressed turn.
+- **When the lead has its own loop** (recommended), mute its relay seat with `control.py set <lead> muted`. Its bot stays trusted, and the lead's loop answers untagged questions instead, within about 5 minutes. Otherwise two processes answer as the same bot.
+- **Who starts work.**
+  - Trusted humans and the lead's bot assign work. The lead's posts count whichever process wrote them; only the relay's own pause notices are treated as context.
+  - A teammate's @-mention asks the mentioned seat for help, and that seat may answer.
+  - Each addressed seat adds a 👀 reaction when the message comes in.
+  - `control.py lead-post` posts as the lead, for a lead session without a Slack script of its own.
 - **Limits.** By default 150 model turns per rolling 24 hours, and a pause after 4 hours with no trusted-human or lead post. A one-time notice is posted when the relay pauses.
-- **Rules.** Posts are top-level only; the relay never posts in threads. Reply parsing tolerates prose before the JSON.
+- **Rules.** Seats are asked to post top-level, and the relay itself never posts in threads. Reply parsing tolerates prose before the JSON.
 
 ## Prerequisites
 
@@ -34,7 +39,7 @@ Use it when you want several CLI agents (Claude Code, Codex, Cursor Agent, Muse 
    - `python3 probe.py --instance instances/<name> --auth --history --prepare`. This makes no posts and prints no tokens.
    - Then send at most one `--seat <seat>` connectivity prompt per seat.
 
-Each worker seat gets a scratch clone of `source_repo` under `instances/<name>/work/<seat>`, with pushes back to the source disabled.
+Each worker seat gets a scratch clone of `source_repo` under `instances/<name>/work/<seat>`. Its `origin` is the source checkout, so a seat can push a branch there for the lead to integrate.
 
 ## Slack apps
 
@@ -82,7 +87,7 @@ All commands take `--instance instances/<name>`. The instance directory must be 
 | `show` | Preferences, queue counts, blocked and active batches |
 | `set <seat> <mode> [--topic T]` | `follow_conversation`, `follow_assigned` (with topics), `mentions_only` (addressed-only with buffered context), or `muted` |
 | `route --text '...' [--as human\|lead]` | Show which seats would reply, without touching Slack |
-| `lead-post [--file F]` | Post top-level as the interactive lead and ledger the message ts (text from a file or stdin) |
+| `lead-post [--file F]` | Post top-level as the lead (text from a file or stdin) |
 | `resolve <batch-id>` | Release a failed or ambiguous batch after you inspect it; never replays it |
 | `mark-answered <seat> <ts> [--reply-ts TS]` | The seat already answered elsewhere: deliver the message as context only |
 
@@ -92,9 +97,11 @@ All commands take `--instance instances/<name>`. The instance directory must be 
 
 `"posture": "inherit"` is the default. In inherit posture, anything an agent can do interactively it can also do when triggered from Slack: the same settings, permissions, tools and MCP servers. `"posture": "locked"` is opt-in. It pins each CLI to gated permission modes, restricts the shell, and refuses bypass flags. Only trusted humans and the ledgered lead can start replies, but Slack text still reaches the model, so choose posture per seat with that in mind.
 
+`"yolo": true` on an inherit seat runs it the way people run an agent with no approvals: Claude `--dangerously-skip-permissions`, Cursor `--yolo --approve-mcps`, Muse `--yolo`, Codex `--dangerously-bypass-approvals-and-sandbox`, and ACP permission requests allowed once. A headless run has nobody to approve anything. Without yolo, an action that needs approval is simply refused, and that seat may be unable to edit files or run commands. The setup agent sets yolo for each harness the user runs without approvals.
+
 ## Known limits
 
-- Thread replies are not ingested; intake and posting are top-level only.
+- Thread replies are not ingested; intake reads top-level messages only.
 - Context rollover is not built yet. Each seat resumes one session per channel indefinitely. Usage is recorded per batch, but nothing moves a seat to a fresh session automatically.
 - The fallback from a dropped live socket to polling is verified only by tests with a fake socket, not against a live Slack outage.
 - There is no `reactions:read` by default. The relay adds 👀 reactions but cannot see reactions.

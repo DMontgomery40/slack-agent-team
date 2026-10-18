@@ -1,13 +1,6 @@
 # Public Slack skill research
 
-Reviewed official sources on October 17, 2026. Recommendations below are engineering judgments where marked; vendor capabilities still require installation-specific acceptance tests. Original skill was read, not changed.
-
-## Highest-value changes
-
-1. **Make work scope general.** Start from a purpose (daily assistant, shared operations, research, delivery coordination, or software project). Repository and checkout are optional resources. Core binding should be workspace/channel + agent identity → owner + actual runtime/session + authorized resources + receiving behavior. Add examples for an everyday assistant and a delivery team; do not require developer tooling for the former.
-2. **Separate four proofs:** installed identity; inbound wake-up; access to required resources; completed work returned under the intended identity. A Slack connector in a local session proves tools, not wake-up. A dot contact method is a managed route, not a custom relay token. Cross-agent intake must be tested from the actual peer sender.
-3. **Promote durable intake and side-effect reconciliation** into an explicit checklist: authenticated input → durable receipt/dedup → fast transport ACK → bounded work queue → task state → result outbox/readback. This sequence is a recommendation, not a guarantee provided by Slack. Do not describe transport delivery as exactly-once execution.
-4. **Keep defaults configurable:** personal-private versus shared-team context; notification mode; thread versus top-level summaries; permitted senders and assignment authority. Do not publish the original user's name, project channel ownership, model names, local paths, or organizational preferences as universal defaults.
+A dated record of the official sources behind this skill, first reviewed October 17, 2026. Products change weekly, so recheck before relying on any of it.
 
 ## Delivery and transport
 
@@ -55,12 +48,6 @@ Team Bot setup officially authorizes through Cursor and creates a dedicated per-
 
 For OpenRouter, the model ID and selected hosting provider are separate choices. Provider fallback defaults to enabled; `provider.allow_fallbacks=false` constrains failover, and `provider.only`/exact provider slugs constrain routes. This is separate from a `models` fallback list or auto-routing. `provider.require_parameters=true` prevents silent unsupported-parameter loss. Recommendation: record model fallback and provider fallback separately; pin when identity/reproducibility/data location matters; verify supported tools and returned provider/model for the actual run. Record relevant data collection/ZDR constraints instead of assuming all endpoints share a policy. [OpenRouter provider routing](https://openrouter.ai/docs/guides/routing/provider-selection).
 
-## Public package acceptance additions
-
-Add tests/checklist rows for fast ACK independent of slow work; invalid/stale HTTP signature; duplicate event after restart; ambiguous result-post reconciliation; HTTP 429 backoff; same-message delivery from several app identities; unknown-peer rejection; private-context leakage prevention; finite two-agent handoff; permission denial; actual personal assistant resource access without a repository; requested monitoring confirmed separately; and role-specific capability results (notification, conversational, tool-using, implementation).
-
-For a documentation-only package, these are setup acceptance procedures, not claims that a runtime or every vendor route has been executed. Public CI should validate JSON, internal links, packaging, absence of credentials, and consistency of examples. A full repo fits the existing multi-file skill and lets users version, fork, and contribute fixes.
-
 ## Desktop-assisted sessions
 
 User premise: the public procedure should assume authorized desktop access and use it as far as practical. State that up front, while retaining real login/admin/tool-policy gates. Recommended route: when a product has no supported incoming API, an authorized desktop operator can target an existing session through its actual UI. Record application, window/session identity, focused input, intended recipient and task correlation; verify submission and real result before reporting delivery. Model response generation, returned message and actual tool execution are separate proofs. A local desktop that requires login/unlock/awake state is an interactive availability dependency, not an unattended hosted service. Do not invent a stable background wake-up capability from one successful UI handoff. These are operational recommendations, not claims of a vendor-supported automation API. Desktop access alone also does not change whose data a managed shared assistant may disclose.
@@ -71,7 +58,7 @@ The initial product list did not adequately explain the overlap. Official [Team 
 
 Slack's [agent documentation](https://docs.slack.dev/ai/developing-agents/) explicitly links `assistant:write` to agent features and labeling. [Agent migration](https://docs.slack.dev/ai/migrating-to-agent-messaging/) is substantive and one-way; [token types](https://docs.slack.dev/authentication/tokens/) remain a separate concern. A historical local visual test corroborated APP-to-AGENT configuration, but token survival in one reinstall is not a general guarantee. Use [the app/agent procedure](slack-apps-and-agents.md).
 
-Live dogfooding found that channel invitation and successful posting can coexist with missing private-history scope, and an old healthy status file can outlive its listener. These observations sharpen the subscription acceptance checks; they do not establish an always-on four-agent network. Private setup evidence and model consultations remain outside the public package.
+Live dogfooding found that channel invitation and successful posting can coexist with missing private-history scope, and an old healthy status file can outlive its listener. Private setup evidence and model consultations remain outside the public package.
 
 ## Participant kinds, October 18, 2026
 

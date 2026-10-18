@@ -19,7 +19,7 @@ def main():
     ack=sub.add_parser('context-ack');ack.add_argument('id')
     rt=sub.add_parser('route',help='show which seats would reply to TEXT (no Slack)');rt.add_argument('--text',required=True);rt.add_argument('--as',dest='sender',choices=['human','lead'],default='lead')
     ma=sub.add_parser('mark-answered',help='seat already answered message TS outside the relay: context only, no reply turn');ma.add_argument('agent');ma.add_argument('ts');ma.add_argument('--reply-ts',default='')
-    lp=sub.add_parser('lead-post',help='post top-level as the interactive lead and ledger the ts (text from --file or stdin)');lp.add_argument('--file')
+    lp=sub.add_parser('lead-post',help='post top-level as the lead (text from --file or stdin)');lp.add_argument('--file')
     args=p.parse_args()
     cfg=load(args.instance)
     if getattr(args,'agent',None) and args.agent not in cfg.bots:p.error('Unknown seat for this instance')
@@ -28,12 +28,12 @@ def main():
     if args.command=='route':
         from routing import plan
         user=next(iter(cfg.trusted)) if args.sender=='human' else cfg.bots[cfg.lead]
-        e={'team':cfg.team,'channel':cfg.channel,'user':user,'ts':'1.0','text':args.text,**({'lead_origin':'interactive'} if args.sender=='lead' else {})}
+        e={'team':cfg.team,'channel':cfg.channel,'user':user,'ts':'1.0','text':args.text,**({'lead_origin':'lead'} if args.sender=='lead' else {})}
         print(json.dumps({'replies':sorted(n for n,v in plan(cfg,e,{}).items() if v['reply'])}));return
     if args.command=='lead-post':
         text=Path(args.file).read_text() if args.file else sys.stdin.read()
         if not text.strip():p.error('Empty lead post')
-        print(json.dumps({'ts':lead_post(cfg,text),'ledger':str(cfg.lead_ledger)}));return
+        print(json.dumps({'ts':lead_post(cfg,text)}));return
     s=Store(cfg.dir/'deliveries.sqlite',cfg)
     actor='local-uid:'+str(os.getuid())
     if args.command=='set':result=s.preference(args.agent,args.mode,args.topic,actor=actor)

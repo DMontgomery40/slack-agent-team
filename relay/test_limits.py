@@ -54,7 +54,7 @@ class LimitTests(LabCase):
         self.assertEqual(len(posts),1);self.assertIn('No ACK needed',posts[0])
         s.ingest([event(ts='9.500',text=posts[0],user=BOT[self.cfg.lead])])
         with s.db() as db:ev=json.loads(db.execute("SELECT event FROM notification_events WHERE ts='9.500'").fetchone()[0])
-        self.assertEqual(ev.get('lead_origin'),'relay')
+        self.assertEqual(ev.get('lead_origin'),'notice')
 
 class LeadSeatAndParserTests(LabCase):
     def test_addressed_only_lead_seat_still_answers_untagged_human_requests(self):

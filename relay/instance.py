@@ -21,7 +21,7 @@ INHERIT_WARNING='inherit posture: anything an agent can do interactively it can 
 def posture_of(seat_cfg):return seat_cfg.get('posture','inherit')
 def shell_of(seat_cfg):return seat_cfg.get('shell',SHELL_DEFAULT[seat_cfg.get('provider','none')])
 # Claude Read deny rules (deny beats the user's interactive Read(///**) allow): credentials and relay state, never the seat's own clone.
-CLAUDE_DENY_READ=['{credentials_dir}/**','{instance}/lead-ledger.jsonl','{instance}/deliveries.sqlite*','{instance}/sessions/**','{instance}/diagnostics/**','~/.ssh/**']
+CLAUDE_DENY_READ=['{credentials_dir}/**','{instance}/deliveries.sqlite*','{instance}/sessions/**','{instance}/diagnostics/**','~/.ssh/**']
 
 class Instance:
     def __init__(self,data,instance_dir):
@@ -56,10 +56,8 @@ class Instance:
             if shell_of(s) not in SHELL_SUPPORT[s.get('provider','none')]:raise ValueError(f'Shell mode {shell_of(s)} is not enforceable for {n}')
             if s.get('approval_policy','on-request') not in CODEX_APPROVALS or s.get('approval_mode','on-request') not in MUSE_APPROVALS:raise ValueError('Ungated approval setting for '+n)
             if s.get('acp_permission','deny') not in ACP_PERMISSIONS:raise ValueError('Unknown ACP permission answer for '+n)
-            if self.can_reply(n):
-                cwd=self.seat_cwd(n).resolve()
-                # Seats write only in their own scratch dir, never in the source (lead's live) checkout.
-                if self.dir not in cwd.parents or (self.source_repo and cwd==self.source_repo.resolve()):raise ValueError('Seat cwd must be a scratch dir under the instance: '+n)
+            # yolo mirrors a user who runs this harness without approvals; a locked seat is the opposite choice.
+            if s.get('yolo') and posture_of(s)=='locked':raise ValueError('A locked seat cannot also be yolo: '+n)
 
     def path(self,value):
         p=Path(value).expanduser()
@@ -77,8 +75,6 @@ class Instance:
             pat=pat.format(credentials_dir=self.credentials_dir,instance=self.dir)
             out.append(f"Read({'/'+pat if pat.startswith('/') else pat})")  # //abs/path or ~/path, per the CLI's rule syntax
         return out
-    @property
-    def lead_ledger(self):return self.dir/'lead-ledger.jsonl'
     def session_file(self,seat):return self.dir/'sessions'/f'{seat}.json'
     @property
     def context_path(self):return self.path(self.data.get('context_file','TEAM_CONTEXT.md'))
@@ -87,7 +83,7 @@ class Instance:
         d=self.dir/'diagnostics';d.mkdir(mode=0o700,exist_ok=True);return d
 
 def ensure_workdirs(cfg):
-    """Give each worker seat its own scratch clone of source_repo (pushes back to the source are disabled)."""
+    """Give each worker seat its own scratch clone of source_repo; its origin is the source checkout, so pushed branches land there for the lead to integrate."""
     made=[]
     for seat in cfg.workers():
         d=cfg.seat_cwd(seat)
@@ -95,7 +91,6 @@ def ensure_workdirs(cfg):
         d.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
         if not cfg.source_repo:d.mkdir(mode=0o700);made.append(seat);continue
         subprocess.run(['git','clone','--local','--quiet',str(cfg.source_repo),str(d)],check=True,capture_output=True)
-        subprocess.run(['git','-C',str(d),'remote','set-url','--push','origin','DISABLED-no-push-to-source-checkout'],check=True,capture_output=True)
         made.append(seat)
     return made
 

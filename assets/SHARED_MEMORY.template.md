@@ -1,49 +1,20 @@
-# Shared personal-assistant memory
+# Shared memory for NAME's assistants
 
-Completed by the setup agent from authorized context; this is not a human form.
+Every personal assistant on the team reads this file. Store the real file privately, outside this public package. Until every assistant has read it, report shared memory as not set up.
 
-Status: TEMPLATE — create the real file in a private shared location outside the public skill checkout.
+## About NAME
 
-User/owner: REQUIRED
-Revision: REQUIRED
-Last updated: REQUIRED
-Authorized readers: REQUIRED
-Authorized writers / serialization owner: REQUIRED
-Sharing restrictions: REQUIRED
-Retention/deletion procedure: REQUIRED
-Timezone: REQUIRED_IANA_TIMEZONE
+Stable preferences and facts, each with where it came from and when, for example "Prefers texts over calls (told Muse, 2026-10-12)". Mark guesses as guesses.
 
-## Preferences and stable facts
+## Commitments
 
-| Fact/preference | Source and date | Status/confidence | Audience | Review/expiry |
-| --- | --- | --- | --- | --- |
-| REQUIRED_USER_SOURCED_ENTRY | REQUIRED | REQUIRED | REQUIRED | REQUIRED |
+What has been promised, by whom, and by when.
 
-## Commitments and decisions
+## How the assistants work together
 
-| Commitment/decision | Owner | Source/date | Status and deadline | Supersedes |
-| --- | --- | --- | --- | --- |
-| REQUIRED | REQUIRED | REQUIRED | REQUIRED | REQUIRED |
+- Who's on the team and what each one handles.
+- Where tasks are tracked.
+- Quiet hours and the timezone.
+- pstack: used or not ([pstack](../references/pstack.md)).
 
-## Coordination conventions
-
-Participant roster: REQUIRED
-Task source of truth: REQUIRED
-Quiet hours and notification preferences: REQUIRED
-pstack source/revision, or "not used": OPTIONAL
-How each assistant reads the memory (and pstack skills, if used): REQUIRED
-Correction and conflict process: REQUIRED
-
-## Change record
-
-| Revision | Writer | Date | Change and source | Participants refreshed |
-| --- | --- | --- | --- | --- |
-| REQUIRED | REQUIRED | REQUIRED | REQUIRED | REQUIRED |
-
-Include durable facts within existing sharing and memory-write authorization; no separate per-entry approval is implied. Label inferences, retire superseded entries, and keep secrets and raw private transcripts out of shared memory.
-
-## Reader revision receipts
-
-| Participant | Canonical revision | Delivered revision | Confirmed read/use | Refresh route / persistence |
-| --- | --- | --- | --- | --- |
-| REQUIRED | REQUIRED | REQUIRED | REQUIRED | REQUIRED |
+Keep secrets and raw private transcripts out of this file. Retire entries that are out of date.

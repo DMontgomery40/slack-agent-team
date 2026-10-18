@@ -1,9 +1,7 @@
-"""The interactive lead is authenticated by this ledger, not by bot identity.
-control.py lead-post posts with the lead seat's token and records the returned ts while holding the ingest lock,
-so the relay can never ingest a lead post before its ledger entry exists."""
-import fcntl,json,os,uuid
+"""Posting as the lead, and the ingest lock shared by polling, Socket Mode and the lead's own posts.
+The lead's bot is trusted the way a human is: its posts assign work, whichever process wrote them."""
+import fcntl,uuid
 from contextlib import contextmanager
-from datetime import datetime,timezone
 
 @contextmanager
 def ingest_lock(cfg):
@@ -12,25 +10,9 @@ def ingest_lock(cfg):
         try:yield
         finally:fcntl.flock(f,fcntl.LOCK_UN)
 
-def ledger_ts(cfg):
-    p=cfg.lead_ledger
-    if not p.exists():return set()
-    return {json.loads(line)['ts'] for line in p.read_text().splitlines() if line.strip()}
-
-def record(cfg,ts,source):
-    fd=os.open(cfg.lead_ledger,os.O_WRONLY|os.O_APPEND|os.O_CREAT,0o600)
-    try:
-        fcntl.flock(fd,fcntl.LOCK_EX)
-        os.write(fd,(json.dumps({'ts':ts,'recorded_at':datetime.now(timezone.utc).isoformat(),'source':source})+'\n').encode());os.fsync(fd)
-    finally:os.close(fd)
-    os.chmod(cfg.lead_ledger,0o600)
-
 def lead_post(cfg,text,slack=None):
-    """Top-level post as the lead seat; the ts is ledgered before the relay's poller can see the message."""
-    with ingest_lock(cfg):
-        if slack is None:
-            from service import Slack
-            slack=Slack(cfg,cfg.lead)
-        ts=slack.post(text,'lead-post:'+str(uuid.uuid4()))
-        record(cfg,ts,'control.py lead-post')
-    return ts
+    """Top-level post with the lead seat's token, for a lead session that has no Slack script of its own."""
+    if slack is None:
+        from service import Slack
+        slack=Slack(cfg,cfg.lead)
+    return slack.post(text,'lead-post:'+str(uuid.uuid4()))

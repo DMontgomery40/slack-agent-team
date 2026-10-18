@@ -110,7 +110,7 @@ class Intake:
             except Exception:pass
 
 class Heard:
-    """Ingest-time "heard" reaction, no model turn: a new trusted-human or interactive-lead post that mentions or names a seat gets
+    """Ingest-time "heard" reaction, no model turn: a new trusted-human or lead post that mentions or names a seat gets
     that seat's reaction from its own bot. Once per (seat, ts), claimed before the call; a failure is logged and never blocks intake."""
     def __init__(self,cfg,store,slack=None):
         self.cfg=cfg;self.store=store;self.slack=slack;self.clients={};self.pending=queue.Queue();self.thread=None
@@ -118,7 +118,7 @@ class Heard:
 
     def seats(self,event,prefs):
         sender=event.get('user')
-        if not (sender in self.cfg.trusted or event.get('lead_origin')=='interactive'):return []
+        if not (sender in self.cfg.trusted or event.get('lead_origin')=='lead'):return []
         text=event.get('text','') or '';names=routing.named(self.cfg,text)
         return [n for n,u in self.cfg.bots.items() if (f'<@{u}>' in text or n in names) and sender!=u and prefs.get(n,{}).get('mode')!='muted']
 

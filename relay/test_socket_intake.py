@@ -5,7 +5,7 @@ from unittest import mock
 import socket_intake
 from socket_intake import Intake,Heard
 from service import poll_once,health
-from lead_ledger import ingest_lock,record
+from lead_ledger import ingest_lock
 from relay_testlib import LabCase,TEAM,CHANNEL,HUMAN,BOT,OTHER_CHANNEL
 
 def payload(ts,text='Hello team.',user=HUMAN,channel=CHANNEL,event_id=None,**extra):
@@ -109,15 +109,15 @@ class SocketIngestTests(SocketCase):
         self.fake.deliver('E1',payload('13.000100','Codex here: tests pass.',user=BOT['codex']))
         self.assertEqual(stored(self.s),['13.000100']);self.assertEqual(self.s.rows('codex'),[])
         self.assertEqual(len(self.s.rows('claude')),1)
-    def test_socket_ingest_waits_for_a_lead_post_to_be_ledgered(self):
-        # control.py lead-post holds ingest_lock while it posts and ledgers; the socket event can arrive in between.
+    def test_socket_ingest_waits_for_the_ingest_lock(self):
+        # A relay pause notice is posted and recorded under ingest_lock; a socket event arriving in between waits for it.
         done=threading.Event()
         with ingest_lock(self.cfg):
             t=threading.Thread(target=lambda:(self.fake.deliver('E1',payload('14.000100','Grok in Cursor, review the diff?',user=BOT['claude'])),done.set()))
             t.start();time.sleep(0.3)
-            self.assertEqual(self.fake.acks,[]);record(self.cfg,'14.000100','test')
+            self.assertEqual(self.fake.acks,[])
         t.join(5);self.assertTrue(done.is_set());self.assertEqual(self.fake.acks,[{'envelope_id':'E1'}])
-        with self.s.db() as db:self.assertEqual(json.loads(db.execute('SELECT event FROM notification_events').fetchone()[0])['lead_origin'],'interactive')
+        with self.s.db() as db:self.assertEqual(json.loads(db.execute('SELECT event FROM notification_events').fetchone()[0])['lead_origin'],'lead')
         self.assertTrue(self.s.rows('grok')[0]['can_reply'])
 
 class IntervalAndFallbackTests(SocketCase):
@@ -183,12 +183,11 @@ class HeardReactionTests(SocketCase):
         self.heard.process(self.ingest({'user':HUMAN,'ts':'30.000100','text':f'Muse Code: thanks, great review. <@{BOT["codex"]}> too.'},{'user':HUMAN,'ts':'30.000200','text':'FYI the build is green.'}))
         self.assertEqual(self.seats.reacted(),[('codex','30.000100'),('muse','30.000100')])
         self.assertTrue(all(c[1:]==('reactions.add','30.000100','eyes',CHANNEL) for c in self.seats.calls))
-    def test_interactive_lead_reacts_but_not_from_its_own_seat(self):
-        record(self.cfg,'31.000100','test')
+    def test_lead_post_reacts_but_not_from_its_own_seat(self):
         self.heard.process(self.ingest({'user':BOT['claude'],'ts':'31.000100','text':'Grok in Cursor: thanks. Claude Code too.'}))
         self.assertEqual(self.seats.reacted(),[('grok','31.000100')])
-    def test_peer_bot_and_unledgered_lead_posts_never_react(self):
-        self.heard.process(self.ingest({'user':BOT['grok'],'ts':'32.000100','text':'Muse Code, thanks!'},{'user':BOT['claude'],'ts':'32.000200','text':'Codex, thanks.'}))
+    def test_peer_bot_posts_never_react(self):
+        self.heard.process(self.ingest({'user':BOT['grok'],'ts':'32.000100','text':'Muse Code, thanks!'}))
         self.assertEqual(self.seats.calls,[])
     def test_muted_seats_are_skipped(self):
         self.s.preference('cursor','muted')

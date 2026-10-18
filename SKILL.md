@@ -1,68 +1,59 @@
 ---
 name: slack-agent-team
-description: Connect and coordinate assistants, existing sessions, dots, and bots through Slack for everyday tasks or project work. Use for onboarding, cross-agent handoffs, or delivery/session failures, not ordinary Slack messaging.
+description: Connect a user's assistants and coding agents as one team in a Slack channel, with a named lead, per-agent listeners, and team rules taken from long-running setups. Use for team setup, adding a channel or agent, or fixing an agent that doesn't hear the channel; not for ordinary Slack messaging.
 ---
 
 # Slack agent team
 
-**Assumption: the user has authorized desktop use for this setup. Use available desktop controls, installed apps, browser, and terminal proactively, alongside connected tools and supported APIs. Complete the authorized setup; pause only at a concrete missing login, MFA, operating-system permission, administrator restriction, or action outside the user's scope.** Desktop access does not override a tool's actual permission controls. The human does two things: point an assistant at this skill, and name the lead. Every procedure below is for agents to execute, including installation, subscription changes, and credential setup.
+**Assumption: the user has authorized desktop use for this setup. Use installed apps, browser, terminal, desktop controls and connected tools to do the work yourself. Stop only at a concrete barrier, such as a login, MFA, OS permission or admin approval that only the user can give.**
 
-When unstated, infer values from the current account, conversation, existing setup, and authorized shared context. Default owner to the requesting user; preserve existing channel privacy/modes, and make new channels private. Use the user/account timezone before the host timezone, preserve established quiet hours, and otherwise leave quiet hours unset without starting unsolicited schedules. Use existing authorized spend only. For a new custom task without existing limits, use starter bounds of 10 model turns, 6 public replies, 3 handoffs, 1 concurrent task per session, and 15 minutes per bounded task; split larger work into units and adjust within existing authorization. Choose a reachable private setup/memory location yourself and record it; do not ask the human to fill templates. Ask only for a genuinely missing decision that cannot be inferred and materially blocks the requested work.
+The human does two things: points you at this skill and names the lead. Everything else is yours.
 
-When reading this file by URL, resolve relative references against `https://raw.githubusercontent.com/DMontgomery40/slack-agent-team/main/` or obtain the complete repository tree. Follow the selected references yourself.
+When reading this file by URL, resolve relative links against `https://raw.githubusercontent.com/DMontgomery40/slack-agent-team/main/`, or clone the repository.
 
-Connect the assistants the user already uses. A team may be a personal dot and a research bot, several existing chats, a household helper, or a large project with independent workers. A repository, coding role, new workspace, and custom bot are all optional. Preserve existing sessions and selected products/models.
+This skill copies setups that have run real projects for days. Don't add rules, gates or ceremony that they didn't have. Agents run the way the user runs them, including autonomous modes, with their normal tools and MCP servers. Restrictions are opt-in, per agent, when the user asks for them.
 
-This is a setup and operating skill with templates and reference designs, not a hosted always-on service. The [reference relay](relay/README.md) provides addressed-only waking, 👀 receipts, push intake and run limits once the setup agent configures and runs it, or an equivalent, for each channel. Report which of these a given team actually has. Produce a verified path from the real sender to the intended participant and back, and name exactly which parts still require a bridge or human operation.
+## 1. Lead first
 
-## 0. Bootstrap and onboard
+If the user didn't name a lead, ask once and recommend one: the strongest coding agent on this computer for a coding project, or the main personal assistant for a personal team. Give the lead [lead.md](references/lead.md).
 
-If reached through one URL, obtain a complete readable tree or fetch the linked files against the source base. Verify required references are accessible before using them. Discover the intended existing participants from the conversation and workspace. The setup agent delivers this entrypoint, applicable complete references, and the shared roster/context pointer to each participant through its actual authorized route; the human does not repeat onboarding per bot. Record each participant’s receipt and access gaps. If joining an already configured team, register only the missing participant.
+The lead works in Slack, not just in its terminal. As soon as it's a channel member, it posts top-level: who it is, that it's setting the team up, and who it can see. It asks the user its questions in the channel too.
 
-If the user has not named a lead, ask once now and include a recommendation; without a lead nothing starts. Give the lead the standing instructions in [lead.md](references/lead.md), and suggest roles by each model's strengths.
+## 2. Find the team and get everyone in
 
-**Done:** one setup owner has the readable package, the lead is named, and each intended participant has received the applicable onboarding material or a named access gate.
+1. **List every assistant you can find:**
+   - Slack apps and bots in the workspace (`users.list`);
+   - local CLIs and desktop apps;
+   - existing sessions.
 
-## 1. Discover the participants
+   Classify each one as an **assistant** or a **coding agent** ([participants.md](references/participants.md)). Slackbot is neither kind; don't invite or assign it.
+2. **Show the user the roster:** "Here's who I can see. Who should I add or leave out, and did I miss anyone?" Carry the user's original request word for word into every agent's onboarding, so the user never repeats it.
+3. **Give each assistant one plainly named Slack app,** named for the product: "Codex", "Claude Code", "Muse Code". Never use a project name. Reuse existing apps, and retire duplicates ([slack-apps-and-agents.md](references/slack-apps-and-agents.md)). When Grok Bot and Cursor overlap, read [grok-cursor-identity.md](references/grok-cursor-identity.md).
+4. **Invite every participant yourself** with `conversations.invite`. Private channels need `groups:write.invites`; public channels need `channels:write.invites`. Confirm with `conversations.members`.
 
-Discovery is the lead's job, not the user's. On the first run, list every assistant you can find: Slack apps and bots in the workspace (`users.list`), vendor apps, local harness CLIs and desktop apps, and existing sessions. Then show the user that list: "Here's who I can see. Tell me who to add or exclude, and anyone I missed." Carry the user's original setup request, verbatim, into every participant's onboarding so the user never repeats it. Invite each chosen participant's actual Slack identity yourself with `conversations.invite`; the lead's app needs `groups:write.invites` for private channels or `channels:write.invites` for public ones. Then verify membership. Infer purpose, owners, participants, existing Slack channels, resource access, and current authorization from the conversation and installed environment. Participants may use Hermes, OpenClaw, Codex, Claude, Muse, Grok, dots, or another harness; these are discovery assumptions, not instructions to install new products. Inspect available app integrations and sessions before creating anything. Keep existing channels and active work intact. Read [setup-workflow.md](references/setup-workflow.md) when you need inventory, provisioning, or handover details. When joining a configured team, read its roster and register only your participant/session; coordinate with its setup owner instead of reprovisioning everyone.
+## 3. Make sure every agent hears the channel
 
-First classify each participant as an **assistant** (bot, dot, personal assistant) or a **coding agent**, using [participants.md](references/participants.md); one vendor often ships both under similar names. For each participant, distinguish product/harness, exact model if exposed, account, visible identity, and actual conversation/session. Discover whether it can read, receive, wake, continue an existing session, reply, and act. Record verified, untested, unsupported, or not applicable for each capability in [team.example.json](assets/team.example.json). Read [interoperability.md](references/interoperability.md) when selecting or diagnosing a participant’s native, desktop, connector, or custom route.
+Being in a channel doesn't make an agent read it. Give each participant a listener, following [listeners.md](references/listeners.md):
+- **The lead and any agent that can hold a session** run their own loop. In Codex, that's a heartbeat automation every 5 minutes. In Claude Code, it's `/loop 5m …`.
+- **Vendor bots** use their own triggers.
+- **Agents that can't keep a session** get a bridge or the [reference relay](relay/README.md).
 
-When Grok Bot and Cursor overlap, resolve the actual assistant, model-in-runtime, and delegated worker through [grok-cursor-identity.md](references/grok-cursor-identity.md). Use one plainly named Slack app per assistant; the channel is the project, and each assistant gets its own session per channel. Never name an app after a project. When creating tokens or diagnosing APP versus AGENT, read [slack-apps-and-agents.md](references/slack-apps-and-agents.md); a Slack feature, bot identity, credential, and running agent are separate layers.
+Then test every route with a real post. A bot's @-mention isn't always delivered as a mention.
 
-Before project work, every participant reads applicable context across `.codex/`, `.claude/`, other present project harness directories, and relevant nested instructions. For personal assistance, create a separate private `SHARED_MEMORY.md` and have every assistant read the same revision; until each confirms that revision, report shared memory as not set up. For coding projects, follow [coding-projects.md](references/coding-projects.md): Jira by default, a fresh session at 75–85% of the context window for coding agents, and one writer per working copy. Follow [shared-context.md](references/shared-context.md) for boundaries and approved external pointers in both branches. Offer the [pstack skills](references/pstack.md) to personal-assistant agents as a recommended, optional shared skill set; record the user's choice and, if used, how each loads the same reviewed source.
+## 4. Set up the shared record
 
-**Done:** each requested participant has a named route, owner, capability record, and unresolved gates. A model with the same name is not a replacement for the user's existing assistant and memory.
+- **Slack is the conversation record.** Everything else mirrors it.
+- **Coding projects:** use a Jira board by default, or the project's existing tracker. Also hand off to a fresh session when a coding agent's context is 75–85% full ([coding-projects.md](references/coding-projects.md)). The user can say "no Jira".
+- **Team context file:** write one short file every agent reads, from [TEAM_CONTEXT.template.md](assets/TEAM_CONTEXT.template.md). It covers what the channel is for, the roster, how to address each agent, where things live, and the [team rules](references/team-rules.md).
+- **Personal teams:** keep a private `SHARED_MEMORY.md` ([template](assets/SHARED_MEMORY.template.md)). Until every assistant has read it, report shared memory as not set up.
+- **pstack:** offer [@poteto's pstack](references/pstack.md) to personal assistants as an optional shared skill set.
 
-## 2. Connect the smallest useful workflow
+## 5. Start the work
 
-Prefer the product's existing Slack integration or supported session controls. Use desktop/browser setup when that is the available route. A desktop-controlled session is a valid participant; document foreground, login, sleep, and supervision dependencies. Use a custom receiver only where the requested workflow needs one.
-
-Set the audience and purpose for each channel or DM. Invite every participant's actual posting identity, including vendor apps, and verify membership with `conversations.members`. Post top-level; no threads by default ([thread policy](references/notifications.md#thread-policy-no-threads-by-default)). Relay seats run the way the user runs each harness, including autonomous modes, with no extra approval prompts. Restrictions are an opt-in per-seat `locked` posture ([runner tools](references/delivery-and-recovery.md#runner-tools-and-permissions)). Keep personal context private unless sharing is authorized. A public skill repository does not imply a public Slack channel. Read [multiple-roles.md](references/multiple-roles.md) when several participants share a harness/model or need separate identities.
-
-Read [notifications.md](references/notifications.md) whenever subscribing a participant or switching all messages ↔ mentions only; apply the actual runtime control and verify positive/negative delivery. Read [credentials-and-lifecycle.md](references/credentials-and-lifecycle.md) when adding credentials or separating temporary projects from persistent personal assistants.
-
-Support Follow conversation, Follow assigned work, Mentions only, and Muted as explicit per-participant/channel preferences where the route permits. Use the requested behavior and the defaults in the notification guide. Separate receiving context, waking a model, replying publicly, and authorization to execute. Preserve useful peer context without an acknowledgment chorus.
-
-For custom routes read [delivery-and-recovery.md](references/delivery-and-recovery.md) and select [manifest templates](assets/README.md). Keep credentials outside the package and distinguish bot, app-level, signing, provider, and provisioning secrets. When a provider claim is uncertain or stale, use [source references](references/research.md) to recheck its current official documentation.
-
-**Done:** every participant is a verified channel member, and one bounded, useful handoff works through the selected path. Expand to the remaining participants without replacing working integrations.
-
-## 3. Make cooperation accountable
-
-Use [handoff.example.json](assets/handoff.example.json) as an optional adapter contract: original sender, recipient, conversation/task identity, authorized scope, context, expected result, deadline/timezone, and reply destination. It is a local design, not a Slack or vendor API schema. Direct peer and coordinator-routed collaboration are both valid; choose based on the number of participants and available controls.
-
-For personal assistance, preserve private calendars/mail and sharing limits, quiet hours, timezone, task expiry, and recurring-task intent. For projects, add resource/repo scope, accountable owners, work isolation where needed, review policy, and artifact evidence. A peer message can supply context without granting new authority. Enforce configured authority in the available runtime/adapter controls.
-
-**Done:** tasks have an owner, finite reply/handoff/spend bounds, completion state, and a cancellation/recovery route. A receipt or queued event is not completed work.
-
-## 4. Verify and hand over
-
-Run applicable checks from [acceptance.md](assets/acceptance.md), including the actual peer/coordinator sender, existing-session continuity, useful tool output, audience isolation, no echo loops, and idle-point recovery. Test live only within the authorized setup; use offline fixtures for disruptive or cross-boundary failure cases. Never interrupt active work to finish a checklist.
-
-Save a redacted roster, preferences, configuration/version references, evidence, operator, and stop/recovery instructions in an agent-selected reachable private setup location, respecting any existing user preference. Keep installed skill files reusable. Mark manual relay, interactive desktop, notification-only, analysis-only, and action-capable routes accurately, with tested surfaces and availability.
-
-Finish with what works, what remains untested or unavailable, and the exact next owner action. Do not call installed apps, prepared templates, or a fresh substitute chat an operational connection to an existing assistant.
-
-**Done:** the requested capabilities have current evidence or named access gaps, the private operating record is saved, and the user has the working destination plus an accurate availability statement.
+1. The lead posts its announcement ([lead.md](references/lead.md)) and assigns the first real task by name.
+2. Check that the task comes back through the channel.
+3. Save a private setup record outside any repository: roster, apps, token file locations, listeners, how to stop each one. Also save a copy-paste undo script.
+4. Tell the user three things:
+   - what works;
+   - what doesn't work yet;
+   - the one thing only they can do next, if there is one.

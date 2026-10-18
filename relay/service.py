@@ -26,8 +26,7 @@ class Slack:
         self.identity={'team':a.get('team_id'),'user':a.get('user_id')}
     def call(self,method,data):
         if 'channel' in data and data['channel']!=self.cfg.channel:raise RuntimeError('Out-of-instance channel')
-        # Team rule: no threads. Posts are always top-level in this instance's channel.
-        if method=='chat.postMessage' and (data.get('channel')!=self.cfg.channel or 'thread_ts' in data or data.get('reply_broadcast')):raise RuntimeError('Only top-level posts to the instance channel are allowed')
+        if method=='chat.postMessage' and data.get('channel')!=self.cfg.channel:raise RuntimeError('Posts go to the instance channel only')
         a=self.transport(method,data,self.token)
         if not a.get('ok'):raise RuntimeError('Slack API returned '+str(a.get('error','invalid')))
         return a
@@ -110,18 +109,19 @@ PAUSE_NOTICE={'idle':'Relay paused: no posts from {humans} or the lead for {hour
     'budget':'Relay paused: the daily limit of {turns} model turns is used up. Agents wake again as the 24-hour window frees up, or when {humans} raises the limit. No ACK needed.'}
 
 def announce_pause(cfg,store,post):
-    """Post one top-level notice per pause episode with the lead bot, recorded as a relay post."""
+    """Post one top-level notice per pause episode with the lead bot, recorded so intake treats it as context."""
     reason=store.paused()
     if not reason or not store.notice_due(reason):return None
     l=store.limits();text=PAUSE_NOTICE[reason].format(humans=' or '.join(cfg.trusted.values()),hours=l['idle_hours'],turns=l['daily_turns'])
-    store.record_notice(text,post(text))
+    # Post and record under the ingest lock, so intake never sees the notice before it is known to be one.
+    with ingest_lock(cfg):store.record_notice(text,post(text))
     print(json.dumps({'pauseNotice':reason}),flush=True)
     return reason
 
 def health(cfg,store,workers,last_poll,error,intake=None):
     context=read_context(cfg)
     return {'checkedAt':time.time(),'instance':cfg.name,'team':cfg.team,'channel':cfg.channel,'lastSuccessfulPoll':last_poll,'pollError':error,'pid':os.getpid(),'version':3,
-        'leadOriginUncertain':store.lead_uncertain(),'lead_identity_anomaly':store.anomalies(),'threadIntake':False,'threadReplies':'unsupported: intake is top-level history only; every post is top-level','contextRevision':context['revision'],'contextPresent':context['present'],
+        'threadIntake':False,'threadReplies':'unsupported: intake is top-level history only; every post is top-level','contextRevision':context['revision'],'contextPresent':context['present'],
         'posture':{n:{'posture':cfg.posture(n),'tools':cfg.tools(n),'cwd':str(cfg.seat_cwd(n)),'role_policy':cfg.seats[n].get('role_policy')} for n in cfg.workers()},
         'postureWarning':INHERIT_WARNING if any(cfg.posture(n)=='inherit' for n in cfg.workers()) else None,'knownLimits':KNOWN_LIMITS,
         'workers':{t.name:t.is_alive() for t in workers},'gated':[n for n in cfg.workers() if waiting(cfg,n)],'limits':store.limit_status(),'notifications':store.status(),'intake':intake.health() if intake else None}

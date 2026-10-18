@@ -146,7 +146,6 @@
    "home": "antigravity-home",
    "cwd": "work/antigravity",
    "tools": "harness-default",
-   "acp_permission": "deny",
    "mcp_servers": [],
    "shell": "harness-default",
    "posture": "inherit"
@@ -157,5 +156,6 @@
   "idle_hours": 4,
   "buffer_context_max": 20
  },
- "_comment_posture": "posture inherit (default) runs each CLI exactly as you run it interactively; the relay adds nothing. Per-seat fields shell, permission_mode, approval_policy, approval_mode, codex_mcp_allow and codex_plugin_allow apply only when a seat sets posture to locked."
+ "_comment_posture": "posture inherit (default) runs each CLI exactly as you run it interactively; the relay adds nothing. Per-seat fields shell, permission_mode, approval_policy, approval_mode, codex_mcp_allow and codex_plugin_allow apply only when a seat sets posture to locked.",
+ "_comment_yolo": "Set \"yolo\": true on a seat whose harness the user runs without approvals; a headless run has nobody to approve, so without it actions that need approval are refused."
 }

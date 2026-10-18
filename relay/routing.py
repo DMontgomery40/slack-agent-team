@@ -50,8 +50,9 @@ def plan(cfg,event,prefs):
     if not accepted(cfg,event):return {}
     text=event.get('text','');sender=event['user']
     human=sender in cfg.trusted
-    # The interactive lead posts as the lead seat's bot; the store marks those posts the relay did not make itself.
-    lead=sender==cfg.bots[cfg.lead] and event.get('lead_origin')=='interactive'
+    # The lead's bot is trusted like a human (its posts assign work); relay pause notices are context.
+    lead=sender==cfg.bots[cfg.lead] and event.get('lead_origin')=='lead'
+    peer=sender in cfg.bots.values() and not lead
     initiator=human or lead
     authority=human or sender==cfg.bots[cfg.lead]
     mentions=[n for n,u in cfg.bots.items() if f'<@{u}>' in text]
@@ -76,7 +77,8 @@ def plan(cfg,event,prefs):
         direct=n in mentions or n in lines or (initiator and request and (everyone or n in names)) or (human and request and n in responders)
         relevant=any(t.lower() in text.lower() for t in p.get('topics',[]) if t)
         if mode=='follow_conversation' or direct or (mode=='follow_assigned' and relevant):
-            out[n]={'reply':bool(initiator and n in responders and cfg.can_reply(n)),'authority':authority,'direct':direct}
+            # A teammate's @-mention asks for help, so the mentioned seat may answer it.
+            out[n]={'reply':bool(((initiator and n in responders) or (peer and n in mentions)) and cfg.can_reply(n)),'authority':authority,'direct':direct}
     return out
 
 class Ledger:

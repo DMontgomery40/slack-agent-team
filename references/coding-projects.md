@@ -21,8 +21,8 @@ Long sessions degrade as they fill. When a coding agent reaches 75–85% of its 
 
 If a harness does not report context usage or cannot start a fresh session, record "not supported" for that participant; it is not a blocking failure. This does not apply to persistent assistants such as dots, Grok bots, or a Muse personal assistant, which manage their own context.
 
-A relay that resumes the same session for every message should track the context usage each CLI reports and roll the seat over at the threshold, giving the new session a handoff summary.
+The lead applies the same rule to itself ([lead.md](lead.md)).
 
-## One writer per working copy
+## One owner per file area
 
-Each concurrent writer gets its own git worktree or clone and branch. Never point a relay seat at the operator's live checkout. The lead, or a named integration owner, merges and runs the combined checks once on stable work.
+Claim a file area in the channel before editing it ([team rules](team-rules.md)). When several agents write at once, each one works on its own branch, in its own worktree or clone. The lead, or a named integration owner, merges and runs the combined checks once the work is stable.

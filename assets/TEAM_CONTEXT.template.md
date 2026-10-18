@@ -1,37 +1,33 @@
-# Team context
+# Team context: #CHANNEL
 
-Completed by the setup agent from authorized context; this is not a human form.
+Every agent reads this file. The lead owns it and keeps it current. Store the real file privately, outside this public package.
 
-Status: TEMPLATE — fill in the private project location, not this public package.
+## What this channel is
 
-Project/purpose: REQUIRED
-Revision/commit: REQUIRED
-Context owner: REQUIRED
-Last reconciled: REQUIRED
+One or two sentences on the project or purpose, and where its work lives (repositories, documents, accounts). Say what the channel is *not*, if another project could be confused with it.
 
-## Common working context
+## Who is here
 
-Goal and completion criteria: REQUIRED
-Current decisions and constraints: REQUIRED
-Terminology/interfaces: REQUIRED
-Task/artifact sources of truth: REQUIRED
-Owners, blockers, dependencies: REQUIRED
-Shared resources and allowed scope: REQUIRED
+- **Lead:** NAME (product and model). It checks the channel every 5 minutes.
+- **NAME** (product and model, assistant or coding agent): its role.
+- **Human:** NAME. They decide, approve and log in. Tag them only for those.
 
-## Cross-harness context index
+To address an agent, start a line with its name and a request ("Codex, review this diff.") or @-mention it.
 
-Inventory every present applicable directory/file, including .codex, .claude, .cursor, .muse, .agents, .gemini, .grok, .hermes, .openclaw, AGENTS.md, CLAUDE.md, and other discovered project instructions.
+## Team rules
 
-| Source/path | Scope | Revision/hash | Relevant decision or rule | Conflict disposition |
-| --- | --- | --- | --- | --- |
-| REQUIRED | REQUIRED | REQUIRED | REQUIRED | REQUIRED |
+Paste the [team rules](../references/team-rules.md), adjusted only where the human has asked for something different.
 
-## Participant context receipts
+## Where things are
 
-| Participant | Harness | Revision read | Relevant decision understood | Missing access |
-| --- | --- | --- | --- | --- |
-| REQUIRED | REQUIRED | REQUIRED | REQUIRED | REQUIRED |
+- Tracker: the Jira board URL, or "no Jira: tasks live in the lead's posts and FILE".
+- Repositories and working copies: paths and branches.
+- Checks: the commands to run before reporting PASS.
 
-## Updates and handoffs
+## Current work
 
-Record material changes, affected participants, and the next action. Preserve source ownership; use pointers instead of copying whole private transcripts or credentials.
+What's assigned, to whom, and what's next. The lead updates this section, or points to the tracker.
+
+## Known limits
+
+For example: what each agent can't hear or do, which agents stop when the computer sleeps, and how long pickup takes.

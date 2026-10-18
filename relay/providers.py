@@ -1,6 +1,6 @@
 """Provider sessions for one relay instance; session state lives under the instance dir.
 Posture per seat ("tools"): harness-default keeps the harness's normal tools and MCP servers; read-only and none restrict them.
-Every run is pinned to the harness's gated permission mode: anything that needs approval is denied, never auto-approved."""
+Inherit seats run with the user's own harness config; a yolo seat adds that harness's own no-approvals flag. Locked seats are gated."""
 import json,os,queue,re,subprocess,tempfile,threading,time,uuid
 from datetime import datetime,timezone
 from pathlib import Path
@@ -53,7 +53,7 @@ def claude_args(s,state,prompt,deny_reads=()):
     args=[s['executable'],'-p','--output-format','json','--model',s['model'],flag,state['session_id']]
     # inherit: the user's own settings, default mode, tools and MCP servers. `--permission-prompts none` only keeps a headless
     # run from waiting on a prompt nobody is there to answer; it changes no permission the user configured.
-    if not locked(s):return args+extra(s)+['--permission-prompts','none',prompt]
+    if not locked(s):return args+(['--dangerously-skip-permissions'] if s.get('yolo') else [])+extra(s)+['--permission-prompts','none',prompt]
     deny=(['Bash'] if shell_of(s)=='off' else [])+list(deny_reads)  # overrides interactive user allowlists (bare Bash, Read(///**))
     if deny:args+=['--disallowedTools',*deny]
     tools=s.get('tools','harness-default')
@@ -67,10 +67,10 @@ def parse_claude(stdout,model):
 def claude_usage(stdout):
     r=json.loads(stdout);return {k:r[k] for k in ('usage','modelUsage','total_cost_usd','num_turns') if k in r}
 
-# ---- cursor-agent: normal mode and configured MCPs; no --force/--yolo/--approve-mcps, so unapproved actions are refused
+# ---- cursor-agent: the CLI's configured mode and MCPs; a yolo seat adds --yolo and --approve-mcps, the way the user runs it unattended
 def cursor_args(s,state,prompt):
     args=[s['executable'],'-p','--trust','--model',s['model'],'--resume',state['chat_id'],'--output-format','json']
-    if not locked(s):return args+extra(s)+[prompt]  # inherit: the CLI's configured mode, sandbox, allowlist and MCPs
+    if not locked(s):return args+(['--yolo','--approve-mcps'] if s.get('yolo') else [])+extra(s)+[prompt]  # inherit: the CLI's configured mode, sandbox, allowlist and MCPs
     if s.get('tools','harness-default')!='harness-default':args+=['--mode','ask']
     if shell_of(s)=='sandboxed':args+=['--sandbox','enabled']  # overrides the CLI config's disabled sandbox
     return args+extra(s)+[prompt]
@@ -82,7 +82,7 @@ def cursor_usage(stdout):return {'usage':json.loads(stdout).get('usage')}
 
 # ---- Muse Code: normal preset and tools; approval on, LLM approval judge off (it would auto-approve)
 def muse_args(s,state,cwd,prompt):
-    if not locked(s):return [s['executable'],'exec','--json','--session-id',state['session_id'],'--workspace',str(cwd)]+(['--model',s['model']] if s.get('model') else [])+extra(s)+[prompt]
+    if not locked(s):return [s['executable'],'exec','--json','--session-id',state['session_id'],'--workspace',str(cwd)]+(['--model',s['model']] if s.get('model') else [])+(['--yolo'] if s.get('yolo') else [])+extra(s)+[prompt]
     args=[s['executable'],'exec','--json','--session-id',state['session_id'],'--workspace',str(cwd),'--approval-mode',s.get('approval_mode','on-request'),'--approval-judge','off']
     tools=s.get('tools','harness-default')
     if shell_of(s)=='off' and tools=='harness-default':args+=['--disable-shell']
@@ -155,8 +155,9 @@ def codex_disables(s):
 def codex_args(s,state,cwd,prompt):
     model=['-m',s['model'],'-c',f'model_reasoning_effort="{s.get("reasoning_effort","high")}"']
     if not locked(s):  # inherit: the user's codex config as-is (its sandbox, approval policy, MCP servers, hooks)
-        if state.get('thread_id'):return [s['executable'],'exec','resume','--json',*model,*extra(s),state['thread_id'],prompt]
-        return [s['executable'],'exec','-C',str(cwd),'--json',*model,*extra(s),prompt]
+        yolo=['--dangerously-bypass-approvals-and-sandbox'] if s.get('yolo') else []
+        if state.get('thread_id'):return [s['executable'],'exec','resume','--json',*model,*yolo,*extra(s),state['thread_id'],prompt]
+        return [s['executable'],'exec','-C',str(cwd),'--json',*model,*yolo,*extra(s),prompt]
     tools=s.get('tools','harness-default');sandbox='workspace-write' if tools=='harness-default' else 'read-only'
     # workspace-write confined to the seat's scratch clone: no extra roots, no /tmp or $TMPDIR, no network.
     confine=['-c','sandbox_workspace_write.writable_roots=[]','-c','sandbox_workspace_write.network_access=false',
@@ -179,7 +180,7 @@ def codex_usage(stdout):
     turns=[e.get('usage') for e in codex_events(stdout) if e.get('type')=='turn.completed']
     return {'usage':turns[-1] if turns else None}
 
-# ---- ACP (Antigravity): mode pinned to "default"; permission requests answered per acp_permission (deny unless configured)
+# ---- ACP (Antigravity): mode pinned to "default"; permission requests answered per acp_permission (allowed for a yolo seat, else denied)
 def select_review_model(acp,config,model):
     options={x['id']:x for x in config.get('configOptions',[])}
     values={x['value'] for x in options.get('model',{}).get('options',[])}
@@ -198,7 +199,7 @@ def select_review_model(acp,config,model):
 
 class ACP:
     def __init__(self,cfg,seat):
-        s=cfg.seats[seat];self.events=queue.Queue();self.seq=0;self.session=None;self.policy=s.get('acp_permission','deny')
+        s=cfg.seats[seat];self.events=queue.Queue();self.seq=0;self.session=None;self.policy=s.get('acp_permission','allow_once' if s.get('yolo') and not locked(s) else 'deny')
         cwd=cfg.seat_cwd(seat);mcp=list(s.get('mcp_servers',[]))
         home=cfg.path(s.get('home',f'{seat}-home'));(home/'antigravity-acp').mkdir(mode=0o700,parents=True,exist_ok=True)
         settings=home/'antigravity-acp'/'settings.json'

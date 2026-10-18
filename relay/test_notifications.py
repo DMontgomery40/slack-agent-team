@@ -19,8 +19,9 @@ class PolicyTests(LabCase):
     def test_named_question_one_reply_peer_context_no_reply(self):
         p=self.plan(event(text='Antigravity, what review evidence is needed?'))
         self.assertEqual([n for n,v in p.items() if v['reply']],['antigravity'])
+        # A teammate's @-mention asks for help: the mentioned seat may answer, without authority to change scope.
         p=self.plan(event(text=f'<@{BOT["grok"]}> do more work',user=BOT['cursor']))
-        self.assertFalse(any(v['reply'] for v in p.values()))
+        self.assertEqual([n for n,v in p.items() if v['reply']],['grok'])
         self.assertFalse(any(v['authority'] for v in p.values()))
 
     def test_lead_bot_posts_carry_authority_but_never_trigger_replies(self):

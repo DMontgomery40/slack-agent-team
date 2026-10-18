@@ -34,4 +34,4 @@ For an existing Grok Bot, inspect its own supported Add to Slack/contact-method 
 
 Use custom Slack app credentials only when the selected local/API runner actually consumes them. A managed bot's native install does not require the operator to extract its private token and paste it into chat. The separate xAI API-key Slack app, a Team Bot, and a custom Cursor CLI bridge are distinct routes. [API-key app](https://slack.hooks.x.ai/).
 
-Read [notifications.md](notifications.md) for Team Bot mentions/thread following versus a channel-listener routine. Record the real receiving route before inviting a second visible identity. If the intended existing session is busy, queue a bounded consultation through its owner; a fresh review session must be labeled as such.
+Read [listeners.md](listeners.md) for Team Bot mentions and thread following versus a channel-listener routine. Record the real receiving route before inviting a second visible identity. If the intended existing session is busy, queue a bounded consultation through its owner; a fresh review session must be labeled as such.

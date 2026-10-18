@@ -27,7 +27,7 @@ class ArgvTests(LabCase):
     def test_default_shell_is_off_or_sandboxed(self):
         c=self.argv('claude',{});self.assertEqual(c[c.index('--disallowedTools')+1],'Bash')
         rules=c[c.index('--disallowedTools')+1:c.index('--permission-mode')];self.assertEqual(c[-2:],['none','P'])  # variadic flag never swallows the prompt
-        self.assertIn('Read(/'+str(self.cfg.credentials_dir)+'/**)',rules);self.assertIn('Read(/'+str(self.cfg.dir)+'/lead-ledger.jsonl)',rules)
+        self.assertIn('Read(/'+str(self.cfg.credentials_dir)+'/**)',rules)
         self.assertFalse(any(str(self.cfg.seat_cwd('claude')) in r for r in rules))
         for t in ('read-only','none'):
             r=self.argv('claude',{},{'tools':t});self.assertTrue(r[r.index('--tools')+2].startswith('--'))

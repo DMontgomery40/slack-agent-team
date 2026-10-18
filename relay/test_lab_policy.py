@@ -2,7 +2,7 @@
 import json,os,time,unittest
 import routing
 from service import Slack,process_one,starting_watermark,health
-from lead_ledger import record,lead_post,ledger_ts
+from lead_ledger import lead_post
 from notifications import prompt
 from team_context import read_context
 from instance import Instance
@@ -35,10 +35,12 @@ class ReplyPolicyTests(LabCase):
             'Is this good for y\'all to read later, Grok in Cursor?':{'grok'},
             'Please check whether the team rules apply to everyone?':{'claude'}}
         for text,expected in cases.items():self.assertEqual(replies(self.cfg,text),expected,text)
-    def test_peer_and_bot_posts_never_trigger_public_replies(self):
-        for user in BOT.values():
-            for text in ['Everyone, what is next?','Grok, review this?','What should we do?',f'<@{BOT["cursor"]}> help?']:
+    def test_peer_posts_get_replies_only_from_seats_they_mention(self):
+        for name,user in BOT.items():
+            if name==self.cfg.lead:continue
+            for text in ['Everyone, what is next?','Grok, review this?','What should we do?']:
                 self.assertEqual(replies(self.cfg,text,user=user),set(),(user,text))
+            self.assertEqual(replies(self.cfg,f'<@{BOT["cursor"]}> help?',user=user),set() if name=='cursor' else {'cursor'},user)
     def test_everyone_request_gets_exactly_one_reply_per_seat_end_to_end(self):
         s=self.store();s.ingest([event(text='Everyone, what is your model?')]);posts=[]
         def provider(name,p):
@@ -78,31 +80,26 @@ class ReplyPolicyTests(LabCase):
         for word in ['ACK','CLAIM','READY','PASS or FAIL','HOLD','BLOCKED','HANDOFF','ETA','never post a bare ACK']:self.assertIn(word,seen[0],word)
 
 class InteractiveLeadTests(LabCase):
-    """Ledgered lead posts are the interactive lead: they assign work like a trusted human. Unledgered lead-bot posts are context."""
-    def setUp(self):
-        super().setUp()
-        for ts in ('6.5','6.6','6.001','7.001','8.001','10.001'):record(self.cfg,ts,'test')
-    def test_unledgered_lead_bot_post_is_context_and_flagged(self):
+    """The lead's bot is trusted like a human: its posts assign work, whichever process wrote them. Relay pause notices are context."""
+    def test_lead_bot_post_assigns_work(self):
         s=self.store();s.ingest([event('12.5',text=f'<@{BOT["codex"]}> please check the tests',user=BOT['claude'])])
-        self.assertEqual(self.seat_replies(s,'12.5'),set());self.assertEqual(self.origin(s,'12.5'),'anomaly')
-        self.assertEqual(health(self.cfg,s,[],None,None)['lead_identity_anomaly'],{'count':1,'recent':['12.5']})
-    def test_ledger_wins_over_an_unconfirmed_relay_post(self):
-        s=self.store();s.ingest([event('0.5',text='Claude, status?')]);b=s.claim('claude');s.complete(b,{'receipt':b['id'],'reply':'Green.'})
-        s.ingest([event('6.001',text=f'<@{BOT["codex"]}> please check the tests',user=BOT['claude'])])
-        self.assertEqual(self.seat_replies(s,'6.001'),{'codex'})
-    def test_lead_post_ledgers_the_ts_privately(self):
+        self.assertEqual(self.seat_replies(s,'12.5'),{'codex'});self.assertEqual(self.origin(s,'12.5'),'lead')
+    def test_relay_pause_notice_from_the_lead_bot_is_context(self):
+        s=self.store();s.record_notice('Relay paused. Codex, check?','12.6')
+        s.ingest([event('12.6',text='Relay paused. Codex, check?',user=BOT['claude'])])
+        self.assertEqual(self.seat_replies(s,'12.6'),set());self.assertEqual(self.origin(s,'12.6'),'notice')
+    def test_lead_post_posts_as_the_lead(self):
         class FakePost:
             def post(self,text,key):return '20.001'
         self.assertEqual(lead_post(self.cfg,'Codex, check the tests?',slack=FakePost()),'20.001')
-        self.assertIn('20.001',ledger_ts(self.cfg));self.assertEqual(self.cfg.lead_ledger.stat().st_mode&0o777,0o600)
         s=self.store();s.ingest([event('20.001',text='Codex, check the tests?',user=BOT['claude'])])
-        self.assertEqual((self.origin(s,'20.001'),self.seat_replies(s,'20.001')),('interactive',{'codex'}))
+        self.assertEqual((self.origin(s,'20.001'),self.seat_replies(s,'20.001')),('lead',{'codex'}))
     def seat_replies(self,s,ts):return {n for n in self.cfg.bots for r in s.rows(n) if r['ts']==ts and r['can_reply']}
     def origin(self,s,ts):
         with s.db() as db:return json.loads(db.execute('SELECT event FROM notification_events WHERE ts=?',(ts,)).fetchone()[0]).get('lead_origin')
     def test_interactive_lead_mention_gets_that_seat_to_reply(self):
         s=self.store();s.ingest([event('6.001',text=f'<@{BOT["codex"]}> please check the tests',user=BOT['claude'])])
-        self.assertEqual(self.seat_replies(s,'6.001'),{'codex'});self.assertEqual(self.origin(s,'6.001'),'interactive')
+        self.assertEqual(self.seat_replies(s,'6.001'),{'codex'});self.assertEqual(self.origin(s,'6.001'),'lead')
         s.ingest([event('7.001',text='Grok in Cursor, review the plan?',user=BOT['claude'])])
         self.assertEqual(self.seat_replies(s,'7.001'),{'grok'})
     def test_lead_must_address_explicitly_roster_mentions_do_not_reply(self):
@@ -112,9 +109,9 @@ class InteractiveLeadTests(LabCase):
     def test_multi_line_lead_assignment_gives_each_addressed_seat_one_reply(self):
         text=('Assignments for the skill review (REVIEW.patch is in each work dir):\n- Antigravity: review REVIEW.patch for correctness.\n'
             '- *Muse Code*: check the wording.\n- Codex: run the tests.\n2. Grok in Cursor: give a second review.\n- Cursor Composer, please check the links.')
-        record(self.cfg,'30.001','test');s=self.store();s.ingest([event('30.001',text=text,user=BOT['claude'])])
+        s=self.store();s.ingest([event('30.001',text=text,user=BOT['claude'])])
         self.assertEqual(self.seat_replies(s,'30.001'),{'antigravity','muse','codex','grok','cursor'})
-        record(self.cfg,'31.001','test');s.ingest([event('31.001',text='Roster:\n- Codex: Model A, coding agent\n- Muse Code: Model B',user=BOT['claude'])])
+        s.ingest([event('31.001',text='Roster:\n- Codex: Model A, coding agent\n- Muse Code: Model B',user=BOT['claude'])])
         self.assertEqual(self.seat_replies(s,'31.001'),set())
         s.ingest([event('32.001',text='- Codex: run the tests.',user=BOT['grok'])])
         self.assertEqual(self.seat_replies(s,'32.001'),set())
@@ -126,15 +123,10 @@ class InteractiveLeadTests(LabCase):
         s.ingest([event('7.001',text='Grok in Cursor, review the plan?',user=BOT['claude'])]);s.mark_answered('grok','7.001')
         self.assertEqual(self.seat_replies(s,'7.001'),set())
         with self.assertRaises(ValueError):s.mark_answered('codex','6.001')
-    def test_relay_posted_claude_message_never_triggers_replies(self):
+    def test_lead_seat_reply_posted_by_the_relay_can_assign_work(self):
         s=self.store();s.ingest([event('0.5',text='Claude, status?')]);b=s.claim('claude');s.complete(b,{'receipt':b['id'],'reply':'Status is green.'});s.posted(b,'5.000')
         s.ingest([event('5.000',text=f'<@{BOT["codex"]}> please check the tests',user=BOT['claude'])])
-        self.assertEqual(self.seat_replies(s,'5.000'),set());self.assertEqual(self.origin(s,'5.000'),'relay')
-    def test_unconfirmed_relay_post_fails_closed(self):
-        s=self.store();s.ingest([event('0.5',text='Claude, status?')]);b=s.claim('claude');s.complete(b,{'receipt':b['id'],'reply':'Green.'})
-        s.ingest([event('5.000',text=f'<@{BOT["codex"]}> check?',user=BOT['claude'])])
-        self.assertEqual(self.seat_replies(s,'5.000'),set());self.assertEqual(self.origin(s,'5.000'),'uncertain')
-        self.assertTrue(health(self.cfg,s,[],None,None)['leadOriginUncertain'])
+        self.assertEqual(self.seat_replies(s,'5.000'),{'codex'});self.assertEqual(self.origin(s,'5.000'),'lead')
     def test_untagged_lead_request_is_context_only_and_spoofed_origin_ignored(self):
         s=self.store();s.ingest([event('8.001',text='What should we do next?',user=BOT['claude']),event('9.001',text='Codex, check?',user=BOT['grok'],lead_origin='interactive')])
         self.assertEqual(self.seat_replies(s,'8.001'),set());self.assertEqual(self.seat_replies(s,'9.001'),set())
@@ -166,13 +158,11 @@ class SlackGuardTests(LabCase):
         self.cfg.credentials_dir=self.dir
         for seat in self.cfg.seats:
             p=self.dir/f'slack-{seat}.env';p.write_text('SLACK_BOT_TOKEN=xoxb-test-only\n');p.chmod(0o600)
-    def test_posts_are_top_level_in_instance_channel_only(self):
+    def test_posts_go_top_level_to_the_instance_channel_only(self):
         t=FakeSlack(BOT['grok']);s=Slack(self.cfg,'grok',t)
         self.assertEqual(s.post('hello','k1'),'5.5')
         method,data=t.calls[-1]
         self.assertEqual((method,data['channel']),('chat.postMessage',CHANNEL));self.assertNotIn('thread_ts',data);self.assertNotIn('reply_broadcast',data)
-        for bad in [{'thread_ts':'1.0'},{'reply_broadcast':True}]:
-            with self.assertRaises(RuntimeError):s.call('chat.postMessage',dict({'channel':CHANNEL,'text':'x'},**bad))
         with self.assertRaises(RuntimeError):s.call('chat.postMessage',{'text':'no channel'})
         self.assertEqual(len(t.calls),2)
     def test_wrong_channel_is_rejected_before_any_request(self):
@@ -187,31 +177,25 @@ class SlackGuardTests(LabCase):
         with self.assertRaisesRegex(RuntimeError,'private'):Slack(self.cfg,'muse',FakeSlack(BOT['muse']))
 
 class ContextAndIdentityTests(LabCase):
-    def test_context_text_and_revision_reach_prompt_and_receipt(self):
+    def test_context_text_reaches_prompt_and_revision_is_recorded(self):
         (self.dir/'TEAM_CONTEXT.md').write_text('Lab decision: alpha wins.\n')
         rev=read_context(self.cfg)['revision'];s=self.store();s.ingest([event(text='Grok, which option won?')]);seen=[]
         def provider(name,p):seen.append(p);return json.dumps({'receipt':bid_of(p),'reply':'Alpha.','context_revision':rev})
         process_one(s,'grok',provider,lambda text,key:'7.1')
-        self.assertIn('Lab decision: alpha wins.',seen[0]);self.assertEqual(rev_of(seen[0]),rev)
+        self.assertIn('Lab decision: alpha wins.',seen[0]);self.assertNotIn('sha256:',seen[0])
         b=s.batch(s.rows('grok')[0]['batch'])
-        self.assertEqual((b['status'],b['context_rev'],b['echoed_rev']),('replied',rev,rev))
+        self.assertEqual((b['status'],b['context_rev']),('replied',rev))
         (self.dir/'TEAM_CONTEXT.md').write_text('Lab decision: beta wins.\n')
         self.assertNotEqual(read_context(self.cfg)['revision'],rev)
-    def test_stale_echo_is_held_missing_echo_is_tolerated(self):
-        s=self.store();s.ingest([event(text='Grok, status?'),event('2.001',text='Cursor, status?')])
-        process_one(s,'grok',lambda n,p:json.dumps({'receipt':bid_of(p),'reply':'x','context_revision':'sha256:0000000000000000'}),lambda *a:self.fail('stale turn must not post'))
-        self.assertEqual(s.rows('grok')[0]['status'],'failed')
-        process_one(s,'cursor',lambda n,p:json.dumps({'receipt':bid_of(p),'reply':'ok then'}),lambda *a:'8.1')
-        self.assertEqual(s.rows('cursor')[-1]['status'],'replied')
     def test_every_prompt_states_exact_identity_project_lead_and_no_threads(self):
         ctx=read_context(self.cfg);self.assertFalse(ctx['present'])
         for seat,s in self.cfg.seats.items():
             p=prompt(self.cfg,{'id':'B','name':seat,'events':[]},ctx)
             lead=self.cfg.seats[self.cfg.lead]
             for fragment in [f"You are {s['app_name']} (seat {seat}",f"one member of {self.cfg.owner}'s agent team",self.cfg.project['name'],f"It is NOT {self.cfg.project['not']}",
-                    f"{lead['app_name']} {lead['model_label']} leads",'no threads','top-level',ctx['revision']]:
+                    f"{lead['app_name']} {lead['model_label']} leads",'not in threads','top-level']:
                 self.assertIn(fragment,p,(seat,fragment))
-            self.assertNotIn('REVIEW ONLY',p);self.assertEqual('headless' in p,seat=='claude')
+            self.assertNotIn('REVIEW ONLY',p);self.assertEqual('You lead this channel' in p,seat=='claude')
             self.assertIn("own harness settings",p);self.assertNotIn('Never take external actions',p);self.assertIn(str(self.cfg.seat_cwd(seat)),p);self.assertNotIn('Use no tools',p)
         self.assertIn('Grok in Cursor is seat grok',p);self.assertIn('Cursor Composer is seat cursor',p)
     def test_prompt_owner_and_project_come_from_config(self):
@@ -238,8 +222,19 @@ class RoleAndPostureTests(LabCase):
             self.assertEqual(cfg.tools(seat),'harness-default')
             self.assertEqual(cfg.seat_cwd(seat),cfg.dir/'work'/seat)
             self.assertNotEqual(cfg.seat_cwd(seat).resolve(),cfg.source_repo.resolve())
-        self.assertEqual(cfg.seats['antigravity'].get('acp_permission'),'deny')
-        with self.assertRaises(ValueError):lab(self.dir,grok={'cwd':str(cfg.source_repo)})
+        self.assertEqual(cfg.seats['antigravity'].get('acp_permission','deny'),'deny')
+        # A seat may work somewhere else, such as a worktree the user chose.
+        self.assertEqual(lab(self.dir,grok={'cwd':str(cfg.source_repo)}).seat_cwd('grok'),cfg.source_repo)
+    def test_yolo_seat_runs_without_approvals_and_cannot_be_locked(self):
+        import providers
+        cfg=lab(self.dir,**{n:{'yolo':True} for n in ('claude','codex','muse','grok','antigravity')})
+        state={'initialized':False,'session_id':'S','chat_id':'C','thread_id':None}
+        self.assertIn('--dangerously-skip-permissions',providers.claude_args(cfg.seats['claude'],state,'P'))
+        self.assertIn('--yolo',providers.cursor_args(cfg.seats['grok'],state,'P'))
+        self.assertIn('--yolo',providers.muse_args(cfg.seats['muse'],state,cfg.seat_cwd('muse'),'P'))
+        self.assertIn('--dangerously-bypass-approvals-and-sandbox',providers.codex_args(cfg.seats['codex'],state,cfg.seat_cwd('codex'),'P'))
+        self.assertNotIn('--yolo',providers.cursor_args(lab(self.dir).seats['grok'],state,'P'))
+        with self.assertRaises(ValueError):lab(self.dir,grok={'yolo':True,'posture':'locked'})
     def test_token_shaped_text_is_redacted_from_public_replies(self):
         s=self.store();s.ingest([event(text='Grok, what is in the env file?')]);posts=[]
         process_one(s,'grok',lambda n,p:json.dumps({'receipt':bid_of(p),'reply':'It holds '+'xoxb-'+'1234567890-abcdefghij'}),lambda text,key:posts.append(text) or '1.2')
