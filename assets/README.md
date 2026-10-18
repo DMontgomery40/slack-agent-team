@@ -1,6 +1,6 @@
 # Manifest templates
 
-These are minimal starting points for **custom** apps, not vendor-managed apps and not installed configurations. JSON syntax is locally checked; Slack server-side validation and installation must occur during a real setup. Replace `Project Researcher` and `project-researcher` before creating each distinct role.
+For the scopes and events the [reference relay](../relay/README.md) needs, including Socket Mode on its receiver app and invite scopes on the lead's app, follow its README. These are minimal starting points for **custom** apps, not vendor-managed apps and not installed configurations. JSON syntax is locally checked; Slack server-side validation and installation must occur during a real setup. Replace `Project Researcher` and `project-researcher` before creating each distinct role.
 
 These channel-transport manifests do not enable the full native Agent experience. For APP versus AGENT, use [the agent-feature guide](../references/slack-apps-and-agents.md); creating a bot token and enabling `agent_view` are different operations. For existing Grok Bots, inspect [their native connection](../references/grok-cursor-identity.md) before using a custom manifest.
 
@@ -13,9 +13,9 @@ Use [notifications.md](../references/notifications.md) to apply and verify per-p
 
 The polling template includes both history scopes to cover the private default and existing public channels; remove unused audience scopes before installation. The Socket template receives mentions only. Add history permissions if the runner fetches conversation context. Bot-originated mentions need their own real acceptance check; if your receiver requires general channel message events, add `message.channels` plus `channels:history` and enforce routing filters. For private-channel history use `groups:history`; for corresponding general events use `message.groups`. A private-channel bot still needs membership.
 
-Other optional operations: `channels:read`/`groups:read` for relevant discovery and metadata, `users:read` for user-profile checks, `channels:join` for public self-join, `reactions:write` for reactions. Select additional scopes from the actual methods used. The templates rely on an authorized workspace user adding bots to known channels; they do not give workers channel creation/invitation authority.
+Other optional operations: `channels:read`/`groups:read` for relevant discovery and metadata, `users:read` for user-profile checks, `channels:join` for public self-join, `reactions:write` for reactions. Select additional scopes from the actual methods used. Worker apps do not get channel-creation or invitation authority. The lead's app invites the participants the user chose (see the invite scopes above), or an authorized workspace user adds them.
 
-Leave `chat:write.public`, file access, user tokens, and DMs out until the role needs them. A least-privilege manifest may not run an old helper that unconditionally calls `users.info`; either add its justified scope or adapt the identity check. Review actual granted scopes after installation.
+The lead's app also needs `groups:write.invites` (private channels) or `channels:write.invites` (public channels) so it can invite the participants the user chose. Leave `chat:write.public`, file access, user tokens, and DMs out until the role needs them. A least-privilege manifest may not run an old helper that unconditionally calls `users.info`; either add its justified scope or adapt the identity check. Review actual granted scopes after installation.
 
 ## Agent-applied mentions → all messages change
 

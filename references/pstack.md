@@ -1,6 +1,6 @@
-# pstack for every personal-assistant participant
+# pstack for personal assistants (recommended)
 
-**Agent instruction:** make @poteto's pstack available to every personal-assistant agent, regardless of harness, and explicitly use its relevant skills. Installation alone is not activation. The human should only need to point the assistant at this skill; perform supported setup through available tools/desktop access.
+**Recommended, not required.** Offer @poteto's pstack as a shared skill set for personal-assistant agents, in any harness. If the user accepts, or already uses it, make it available and use its relevant skills; if they decline, record that and continue. Setup never blocks on pstack. Installation alone is not activation. The human only points an assistant at this skill and names a lead; perform supported setup through available tools/desktop access.
 
 ## Source and attribution
 

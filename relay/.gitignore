@@ -1,0 +1,6 @@
+# Runtime state stays out of version control: instances hold sessions, queues, ledgers and logs.
+instances/
+.venv/
+*.sqlite
+*.sqlite-*
+*.env

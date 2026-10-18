@@ -8,6 +8,8 @@ Before project work, **every participant must consult the applicable project con
 
 This is an inventory of relevant instructions and knowledge, not a recursive export of all configuration. Identify instruction/rule/skill/memory files, their scope and relevance; read the relevant bodies and dependencies. Inspect configuration metadata only when needed to understand scope. Exclude credentials, tokens, private session transcripts, caches, and unrelated home-level memories. Hermes or OpenClaw context may live outside the project; use an owner-approved project-specific path rather than importing all global state.
 
+For coding projects, keep tasks in the [task tracker](coding-projects.md) rather than in shared files; `TEAM_CONTEXT.md` holds durable decisions and pointers, not task state. A relay can make the context real for its seats by including the current file and its revision in every prompt.
+
 Create a shared `TEAM_CONTEXT.md` from [the template](../assets/TEAM_CONTEXT.template.md), or extend the project's existing canonical context index. If none exists, use `.agents/TEAM_CONTEXT.md` in the project; choose a private external location instead if its content is confidential and the repository is public. Link the original files with their scope, revision/hash, and conflict disposition. Keep decisions in their established source of truth instead of duplicating entire rule files. Record the resolved goal, constraints, interfaces, terminology, artifact/task locations, and current owner/dependency state.
 
 Each agent reads that index **and its applicable referenced content**, regardless of whether it runs in Codex, Claude, Cursor, Muse, Hermes, OpenClaw, Grok, or another harness. Within authorized repo-write scope, add a lightweight pointer through the harness's supported project instructions, preserving existing content; otherwise deliver the pointer through the existing authorized session route. For managed assistants without filesystem access, deliver an authorized excerpt or attached document with the same revision/provenance. If access is impossible, record the gap instead of claiming shared context.
@@ -17,6 +19,8 @@ A file written for another harness is useful project context, but its tool synta
 **Acceptance:** every participant identifies the same context revision and correctly describes one relevant decision plus its own scope. Verify a small context update reaches each enabled participant before a dependent handoff. Shared context does not mean shared private reasoning, unrestricted tools, or one mutable checkout for concurrent writers.
 
 ## Personal assistants: a separate shared memory file
+
+Nothing creates shared memory automatically, and a template is not shared memory. Until every participating assistant has confirmed reading the same revision, report it as **not set up**. Each harness keeps only its own private memory, and some vendor bots share memory only among their own bots.
 
 Create **`SHARED_MEMORY.md` in an agent-selected private shared location**, respecting existing user preferences, using [the template](../assets/SHARED_MEMORY.template.md). Keep it separate from project context, harness-private memory, and this public skill checkout. All personal-assistant agents use that same canonical file or a provenance-preserving delivery of its latest revision. Prefer an existing private file/document/repository store that participants can actually reach. For a hosted participant without local-file access, deliver the current scoped contents through its supported file/instruction/memory surface using available tools or desktop controls. Record canonical revision, delivered copy revision and refresh mechanism; do not claim a local pointer is readable by that participant. If persistent instructions are unavailable, explicitly refresh at the next session/handoff and record that availability limit. Only report shared-memory adoption after actual read/use evidence.
 
@@ -30,4 +34,4 @@ Use existing sharing authorization; do not add a per-entry approval ceremony. Sh
 
 ## Shared skill practice
 
-All personal-assistant participants use [pstack](pstack.md) across harnesses. Keep its source revision and how each participant loads it in the roster and shared-memory coordination section. The pstack source is shared method guidance; `SHARED_MEMORY.md` is shared user knowledge. Neither substitutes for the other.
+Personal-assistant participants may share [pstack](pstack.md) across harnesses; it is recommended, not required. Keep its source revision and how each participant loads it in the roster and shared-memory coordination section. The pstack source is shared method guidance; `SHARED_MEMORY.md` is shared user knowledge. Neither substitutes for the other.

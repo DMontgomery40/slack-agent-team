@@ -2,6 +2,24 @@
 
 Read when creating credentials, diagnosing an APP/AGENT label, or selecting Slack's Agent messaging experience. These are related configuration layers, not interchangeable entities.
 
+## Recommended layout: one app per assistant; the channel is the project
+
+- **One Slack app per assistant, named for the assistant only:** "Codex", "Claude Code", "Muse Code". Never put a project name in an app's name. The app shows the same name in every channel it joins, so a project-named app becomes misleading the moment it helps somewhere else.
+- **Each channel is a project or purpose.** The runner or relay binds each assistant-and-channel pair to its own session, working copy, and context. That per-channel session is the "agent for that channel". Slack does not host it; your runner does. One bot token serves all of that assistant's channels.
+- **Slack's APP/AGENT badge is unrelated.** It is a display and feature setting, described below. It does not create per-channel identities or tokens.
+- **Use a separate app only for a concrete reason:**
+  - Two seats from the same assistant speak in the same channel. Name them by role, for example "Claude Code · PM" ([multiple roles](multiple-roles.md)).
+  - The seats need different scopes.
+  - You need to contain damage: a bot token can read every channel its bot has joined, so a project that must be sealed off gets its own app, or its own workspace.
+  - It has a different owner or a different retirement plan.
+  - It is in a different workspace, which needs its own installation anyway.
+- **Vendor apps** (Cursor, Claude, ChatGPT, Grok Bot) already come as one app per vendor or per bot. Use their own channel and project settings.
+- **Retire duplicates.** If a workspace already has several apps for the same assistant, often one per earlier project, keep one, rename it plainly, and move every service and helper that uses the others onto its token. Then retire the extras: `auth.revoke` with an extra app's own bot token deactivates that bot and removes it from every channel ([auth.revoke](https://docs.slack.dev/reference/methods/auth.revoke/)), and Manage apps can remove the app entirely. Identify duplicates by product and model, not by name; for example, a model that exists only in one CLI tells you which product the seat really is. Two apps showing the same name is worse than one awkward name.
+- **Per-message names are cosmetic.** With `chat:write.customize` an app can post under a different name or icon per message, for example "Codex · client-x". It is still the same bot, mentions still go to the app, and Slack asks that this be used sparingly and clearly signposted. It is not a substitute for the layout above. [chat.postMessage](https://docs.slack.dev/reference/methods/chat.postMessage/).
+- **Renaming an existing app:** change `display_information.name` and `features.bot_user.display_name` in its manifest. With unchanged scopes no reinstall is needed, and the bot user ID and token stay the same. In an October 2026 test, the internal @handle chosen at first install did not change; messages and mentions show the display name.
+- **Adding scopes** requires a reinstall. In the same test, the existing non-rotating bot token kept working and gained the new scope. Verify with the `x-oauth-scopes` header returned by `auth.test`; do not assume either outcome.
+- **The manifest field `settings.is_mcp_enabled`** controls the app's use of Slack's own MCP server. It does not control the MCP servers your agents use; those belong to each harness ([runner tools](delivery-and-recovery.md#runner-tools-and-permissions)).
+
 | Layer | Meaning and verification |
 | --- | --- |
 | Slack app | Configuration container: app ID, features, OAuth scopes, subscriptions, installation/distribution |

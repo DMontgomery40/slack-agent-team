@@ -1,6 +1,6 @@
 # Agent guide: subscribe and change channel delivery
 
-These steps are for the setup agent. The human only needs to point an assistant at this skill. Use authorized desktop controls, product tools, and current runner configuration to perform the work. Do not hand the human a configuration checklist.
+These steps are for the setup agent. The human points an assistant at this skill and names a lead; everything here is agent work. Use authorized desktop controls, product tools, and current runner configuration to perform the work. Do not hand the human a configuration checklist.
 
 ## First identify which setting is being changed
 
@@ -11,11 +11,25 @@ For the selected participant and channel, record:
 | Requested behavior | Skill mode | Delivery/attention rule |
 | --- | --- | --- |
 | All channel messages / follow the conversation | `follow-conversation` | Deliver permitted human and known-peer conversation context; selectively wake/reply according to the role |
-| Only messages mentioning this agent | `mentions-only` | Deliver direct mentions of this participant's verified bot-user ID; define thread/DM exceptions explicitly |
+| Only messages addressed to this agent (the relay default) | `mentions-only` | Wake on direct mentions of this participant's verified bot-user ID or its name at the start of a message or line. Buffer other eligible messages as context for its next addressed turn. Define thread and DM exceptions explicitly |
 | Only work assigned to this agent | `follow-assigned-work` | Deliver authorized assignments and their selected follow-ups |
 | Stop automatic delivery/attention | `muted` | Suppress new automatic context/turns; active work cancellation is a separate control |
 
-“All” means all eligible messages on the agreed surfaces and audience; it does not mean every Slack event, all private history, or a reply to everything. Do not describe top-level-only support as all thread replies. Choose the user's stated mode; if unstated, preserve the existing mode, or start a new route with assigned work until broader following is requested.
+“All” means all eligible messages on the agreed surfaces and audience; it does not mean every Slack event, all private history, or a reply to everything. Do not describe top-level-only support as all thread replies. Choose the user's stated mode. If unstated, preserve the existing mode. A new relay route defaults to **addressed only, with buffered context**:
+- a seat wakes when it is mentioned, or named at the start of a message or line ("Codex, …");
+- the lead seat also wakes on a trusted human's untagged request;
+- every other message is stored, and up to the 20 most recent are attached to that seat's next addressed turn, so it keeps context without spending a model turn per message.
+
+Following everything wakes every seat for every message, roughly five times the turns for a five-seat team. Use it only when the user asks for it, after saying that once.
+
+## Thread policy: no threads by default
+
+Threads confuse both agents and humans. Many runners read only top-level history, and people lose track of who answered what. Unless the user chooses otherwise:
+
+- Humans and agents post top-level. When replying, stay top-level and name the person or message you are answering, with a short quote or a link.
+- Use a thread only when a human starts one. Answer in that thread, then post any decision or result top-level too.
+- Custom runners never set `thread_ts` by default. If a runner does not read thread replies, say so in the channel charter so people know to stay top-level.
+- Some vendor bots reply only in threads, such as native Cursor launches and Grok Team Bots. Record that as a known exception; the lead re-posts important results top-level.
 
 ## Subscribe an agent
 
@@ -75,11 +89,11 @@ Mute/unmute follows the same process. Muting blocks new automatic delivery/turns
 
 Use unique harmless test values and actual sender identities. Inspect queue/session evidence, not only public responses: silence can mean either selective response or failed delivery.
 
-| Test | Follow conversation | Mentions only |
+| Test | Follow conversation | Addressed only (mentions-only with buffered context) |
 | --- | --- | --- |
-| Untagged authorized human update | Available as session context through the configured path | No automatic delivery/turn for that update |
+| Untagged authorized human update | Available as session context through the configured path | No turn; buffered and attached to this agent's next addressed turn (the lead seat answers untagged requests) |
 | Direct mention of intended agent | Received once | Received once |
-| Mention of a different agent | Role-relevant context only if allowed | No delivery to this agent |
+| Mention of a different agent | Role-relevant context only if allowed | No turn for this agent; buffered context only |
 | Allowed peer update / handoff | Follows configured peer context/assignment policy | Only targeted mention if that peer trigger is supported |
 | Own emitted message | No self-trigger | No self-trigger |
 | Muted participant | No new automatic context/turn in either mode | No new automatic context/turn in either mode |

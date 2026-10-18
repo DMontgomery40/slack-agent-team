@@ -11,6 +11,9 @@ Record PASS, FAIL, PENDING, or N/A with a reason. All checks begin PENDING. N/A 
 | Check | Evidence | Result |
 | --- | --- | --- |
 | Identity and audience | Correct account/workspace/app/bot/user/session; permitted destination | PENDING |
+| Lead named and active | User-named lead recorded; lead announced itself, roster and rules top-level in the channel | PENDING |
+| Channel membership | Every participant's actual posting identity, including vendor apps, appears in `conversations.members`; a mention or `/invite` typed inside a message does not add anyone | PENDING |
+| App naming | Each custom app is named for its assistant (and role, if two share a channel), not for a project | PENDING |
 | Receiver access | Actual receiving credential reads the requested public/private surface; a differently authorized connector's success is separate relay evidence | PENDING |
 | Human round trip | Unique request, receipt/task ID, actual reply | PENDING |
 | Peer round trip | Actual peer/coordinator sender, intended recipient, useful result or unsupported boundary | PENDING |
@@ -19,11 +22,13 @@ Record PASS, FAIL, PENDING, or N/A with a reason. All checks begin PENDING. N/A 
 | Useful resource/tool task | Permitted note/calendar/document/action/code task independently checked; repo optional | PENDING |
 | Shared project context | Every participant read applicable cross-harness context and same reconciled revision | PENDING |
 | Shared personal memory | Authorized participants use same revision, honor a correction, and respect reader/writer boundaries | PENDING |
-| pstack across personal assistants | Source/revision/load method per participant; relevant skill used on a bounded task | PENDING |
+| Coding-project defaults | Task tracker connected per agent or opt-out recorded; context rollover supported or recorded "not supported"; one writer per working copy | PENDING |
+| pstack across personal assistants (optional) | If the user chose pstack: source/revision/load method per participant and a relevant skill used on a bounded task; otherwise N/A | PENDING |
 | Subscription readback | Desired/effective modes, loaded actual control/filter generation, member/grant state; receiver process/heartbeat/run evidence timestamped after test start. Stale status alone stays PENDING | PENDING |
 | Positive automatic receipt | Intake evidence before follow-up; nonce readback alone is not push proof. Vendor-reported run payloads are attributed evidence, not independently exported receiver logs | PENDING |
 | Negative non-delivery | Mentions/mute filter evidence or safe no-history fixture; silence alone insufficient | PENDING |
-| Thread and DM coverage | Separate surface tests and explicit unsupported boundaries | PENDING |
+| Thread and DM coverage | Replies post top-level by default; thread exceptions and unsupported thread intake recorded; DMs tested separately | PENDING |
+| Tool and permission posture | Each seat inherits the user's harness posture (or a recorded opt-in `locked` posture); the trade-off was stated once; headless runs never hang on prompts; only trusted humans and the ledgered lead start work | PENDING |
 | Audience and authority isolation | Unknown sender/route rejected; safe private-context fixture stays private; permitted tool scope enforced | PENDING |
 | Session and model identity | Actual product/session/config; disclosed model/provider and fallback when available | PENDING |
 | Desktop interaction | Correct app/window/chat/focus, submitted input and returned result, availability dependencies | PENDING |
@@ -44,7 +49,7 @@ Record PASS, FAIL, PENDING, or N/A with a reason. All checks begin PENDING. N/A 
 - **Verified round trip:** actual intended sender → target session → returned result, with identity/audience/context proof. A peer round trip specifically needs the real peer sender; a desktop relay is labeled as such.
 - **Operational unattended:** verified round trip plus automatic receive/wake evidence, supervised availability and recovery appropriate to that route. Hidden intake remains unobservable, not automatically verified.
 
-Core checks are identity/audience, the requested human/peer round trip, capability evidence, useful result, applicable notification modes, and authority scope. Project context applies to projects; shared personal memory and pstack apply to personal assistants. Desktop focus checks apply to desktop routes. Durable delivery, signatures, polling/429 and restart checks apply to the selected custom transport. Recurring-task proof applies only when recurring work was requested. Mark other rows N/A with the reason; do not make a personal assistant pass irrelevant code/HTTP checks.
+Core checks are identity/audience, the requested human/peer round trip, capability evidence, useful result, applicable notification modes, and authority scope. Project context applies to projects; shared personal memory applies to personal assistants, and pstack only when the user chose it. Desktop focus checks apply to desktop routes. Durable delivery, signatures, polling/429 and restart checks apply to the selected custom transport. Recurring-task proof applies only when recurring work was requested. Mark other rows N/A with the reason; do not make a personal assistant pass irrelevant code/HTTP checks.
 
 Final capabilities: REQUIRED
 Availability: REQUIRED_HOSTED_INTERACTIVE_DESKTOP_MANUAL_OR_MIXED

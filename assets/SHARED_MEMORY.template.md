@@ -30,8 +30,8 @@ Timezone: REQUIRED_IANA_TIMEZONE
 Participant roster: REQUIRED
 Task source of truth: REQUIRED
 Quiet hours and notification preferences: REQUIRED
-pstack source/revision: REQUIRED
-How each assistant reads the memory and pstack skills: REQUIRED
+pstack source/revision, or "not used": OPTIONAL
+How each assistant reads the memory (and pstack skills, if used): REQUIRED
 Correction and conflict process: REQUIRED
 
 ## Change record

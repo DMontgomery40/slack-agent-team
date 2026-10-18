@@ -33,7 +33,7 @@
       "display_name": "Assistant",
       "job": "REQUIRED_PURPOSE",
       "owner_ref": "REQUIRED_OWNER",
-      "kind": "REQUIRED_ASSISTANT_DOT_BOT_SESSION_OR_AUTOMATION",
+      "kind": "REQUIRED_ASSISTANT_OR_CODING_AGENT",
       "route": "REQUIRED_NATIVE_SESSION_API_DESKTOP_CONNECTOR_CUSTOM_OR_MANUAL",
       "product": "REQUIRED_ACTUAL_PRODUCT",
       "model": {
@@ -225,6 +225,9 @@
     }
   ],
   "coordination": {
+    "lead": "REQUIRED_USER_NAMED_PARTICIPANT_ID",
+    "lead_instructions": "references/lead.md",
+    "thread_policy": "top-level-by-default",
     "topology": "REQUIRED_DIRECT_OR_COORDINATOR",
     "task_system": null,
     "handoff_contract": "handoff.example.json",

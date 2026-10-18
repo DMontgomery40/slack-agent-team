@@ -6,12 +6,12 @@ For example, a project might use one Codex session for QA and another for archit
 
 The harness is the software running the agent, such as Codex or Claude Code. The model is the selected engine within that harness. Neither determines how many jobs or independent teammates the project can define; the chosen runtime must support the required separate sessions and concurrency.
 
-For a custom Slack relay, give each separately visible teammate its own Slack app/bot identity and bot token, and route it to its own actual runner session. The same underlying harness or provider account may serve several teammates where supported.
+By default, one plainly named app per assistant serves every channel, with a separate runner session per channel ([recommended layout](slack-apps-and-agents.md#recommended-layout-one-app-per-assistant-the-channel-is-the-project)). Only when two seats from the same assistant speak in the **same** channel does each need its own Slack app, bot identity and bot token, named by role rather than by project, and routed to its own runner session. The same underlying harness or provider account may serve several teammates where supported.
 
 | Configuration | Agent A: QA lead | Agent B: architecture lead |
 | --- | --- | --- |
 | Stable role ID | `qa-lead` | `architecture-lead` |
-| Visible Slack name | QA lead · project | Architecture lead · project |
+| Visible Slack name | e.g. "Codex · QA" (role, not project) | e.g. "Codex · Architecture" |
 | Harness | Selected harness | May be the same harness |
 | Model and reasoning | Selected model/settings | May be different or identical |
 | Slack app and bot user | Separate app A and bot-user U IDs | Different app B and bot-user U IDs |

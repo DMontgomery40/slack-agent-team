@@ -8,3 +8,6 @@ __pycache__/
 private/
 local/
 *.log
+
+# Local agent worktrees and settings
+.claude/

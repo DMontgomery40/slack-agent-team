@@ -1,0 +1,161 @@
+{
+ "_comment": "Example relay instance: one Slack channel, one Slack app per seat. Copy to instances/<name>/config.json (directory mode 700) and replace every placeholder. All IDs here are fake. trusted_humans maps Slack user ID to display name; only those users and the ledgered interactive lead can start replies. limits: daily_turns per rolling 24 h, idle_hours before agents pause, buffer_context_max unaddressed messages carried into the next addressed turn.",
+ "schema": 1,
+ "instance": "example-team",
+ "owner": "Your Name",
+ "project": {
+  "_comment": "Injected into every prompt. 'not' is optional: a neighbouring project the agents must not confuse with this channel.",
+  "name": "example project",
+  "description": "A short description of what this channel works on.",
+  "not": "example-other-project"
+ },
+ "slack": {
+  "_comment": "credentials_dir holds one slack-<seat>.env file per seat (SLACK_BOT_TOKEN=...) plus the receiver app's app_token_file (SLACK_APP_TOKEN=xapp-...). Every file is mode 600 and never committed. initial_watermark null means the first start begins now, with no backlog replay. reconcile_seconds is the history poll interval while Socket Mode is connected; poll_seconds is used while it is not.",
+  "team": "T00000000",
+  "channel": "C00000000",
+  "channel_private": true,
+  "poll_seat": "claude",
+  "poll_seconds": 20,
+  "reconcile_seconds": 120,
+  "initial_watermark": null,
+  "credentials_dir": "~/.config/slack-agent-team/credentials",
+  "credential_file": "slack-{seat}.env",
+  "credential_key": "SLACK_BOT_TOKEN",
+  "app_token_file": "slack-claude-app.env"
+ },
+ "default_mode": "mentions_only",
+ "_comment_default_mode": "Seats wake only when mentioned or named at the start of a message or line; the lead seat also takes untagged requests from trusted humans. Unaddressed messages ride along as context on the next addressed turn. Set follow_conversation to wake every seat on every message (about 5x the model turns).",
+ "trusted_humans": {
+  "U0000000001": "Your Name"
+ },
+ "lead": {
+  "seat": "claude"
+ },
+ "source_repo": "~/src/your-project",
+ "context_file": "TEAM_CONTEXT.md",
+ "context_max_chars": 32000,
+ "reply_max_words": 150,
+ "heard_reaction": "eyes",
+ "seats": {
+  "claude": {
+   "_comment": "The lead seat. executable must be an absolute path (no ~ expansion). The interactive lead posts with this seat's bot through control.py lead-post.",
+   "bot_user_id": "U0000000002",
+   "app_name": "Claude Code",
+   "aliases": [
+    "claude code",
+    "claude"
+   ],
+   "provider": "claude",
+   "model": "REPLACE_WITH_CLAUDE_MODEL_ID",
+   "model_label": "(model label)",
+   "executable": "/usr/local/bin/claude",
+   "activate_after": null,
+   "cwd": "work/claude",
+   "tools": "harness-default",
+   "permission_mode": "manual",
+   "shell": "off",
+   "posture": "inherit"
+  },
+  "codex": {
+   "bot_user_id": "U0000000003",
+   "app_name": "Codex",
+   "aliases": [
+    "codex"
+   ],
+   "provider": "codex",
+   "model": "REPLACE_WITH_CODEX_MODEL_ID",
+   "model_label": "(model label)",
+   "reasoning_effort": "high",
+   "executable": "/usr/local/bin/codex",
+   "cwd": "work/codex",
+   "tools": "harness-default",
+   "approval_policy": "on-request",
+   "shell": "sandboxed",
+   "posture": "inherit",
+   "codex_mcp_allow": [
+    "openaiDeveloperDocs"
+   ],
+   "codex_plugin_allow": []
+  },
+  "muse": {
+   "_comment": "model null uses the Muse CLI default.",
+   "bot_user_id": "U0000000004",
+   "app_name": "Muse Code",
+   "aliases": [
+    "muse code",
+    "muse"
+   ],
+   "provider": "muse",
+   "model": null,
+   "model_label": "(model label)",
+   "timeout_seconds": 300,
+   "executable": "/usr/local/bin/muse",
+   "cwd": "work/muse",
+   "tools": "harness-default",
+   "approval_mode": "on-request",
+   "shell": "sandboxed",
+   "posture": "inherit"
+  },
+  "grok": {
+   "bot_user_id": "U0000000005",
+   "app_name": "Grok in Cursor",
+   "aliases": [
+    "grok in cursor",
+    "grok"
+   ],
+   "provider": "cursor_agent",
+   "model": "REPLACE_WITH_GROK_MODEL_ID",
+   "model_label": "(model label)",
+   "executable": "/usr/local/bin/cursor-agent",
+   "cwd": "work/grok",
+   "tools": "harness-default",
+   "shell": "sandboxed",
+   "posture": "inherit",
+   "timeout_seconds": 600
+  },
+  "cursor": {
+   "bot_user_id": "U0000000006",
+   "app_name": "Cursor Composer",
+   "aliases": [
+    "cursor composer",
+    "composer",
+    "cursor"
+   ],
+   "provider": "cursor_agent",
+   "model": "REPLACE_WITH_COMPOSER_MODEL_ID",
+   "model_label": "(model label)",
+   "executable": "/usr/local/bin/cursor-agent",
+   "cwd": "work/cursor",
+   "tools": "harness-default",
+   "shell": "sandboxed",
+   "posture": "inherit",
+   "timeout_seconds": 600
+  },
+  "antigravity": {
+   "_comment": "ACP seat. executable is the absolute path to an ACP-compatible server for this seat (Gemini CLI documents `gemini --acp`; check whether your Antigravity install ships one). home is its private state dir under the instance. A model id ending in -high/-medium/-low is split into model plus thinking level when the runtime offers them separately.",
+   "bot_user_id": "U0000000007",
+   "app_name": "Antigravity",
+   "aliases": [
+    "antigravity"
+   ],
+   "provider": "acp",
+   "protocol": "frame",
+   "model": "REPLACE_WITH_ANTIGRAVITY_MODEL_ID-high",
+   "model_label": "(model label)",
+   "executable": "/opt/antigravity/acp-server",
+   "home": "antigravity-home",
+   "cwd": "work/antigravity",
+   "tools": "harness-default",
+   "acp_permission": "deny",
+   "mcp_servers": [],
+   "shell": "harness-default",
+   "posture": "inherit"
+  }
+ },
+ "limits": {
+  "daily_turns": 150,
+  "idle_hours": 4,
+  "buffer_context_max": 20
+ },
+ "_comment_posture": "posture inherit (default) runs each CLI exactly as you run it interactively; the relay adds nothing. Per-seat fields shell, permission_mode, approval_policy, approval_mode, codex_mcp_allow and codex_plugin_allow apply only when a seat sets posture to locked."
+}

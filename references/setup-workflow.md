@@ -22,7 +22,7 @@ Use [notifications.md](notifications.md) to configure and prove subscription beh
 
 ## Context and resource checks
 
-Read [shared-context.md](shared-context.md) for cross-harness project context or personal shared memory. When the team includes personal assistants, follow [pstack.md](pstack.md) to load the actual relevant dependency files across those participants. Check artifact permissions before forwarding content; an accessible link for one agent is not shared access for everyone.
+Read [shared-context.md](shared-context.md) for cross-harness project context or personal shared memory. When the team includes personal assistants and the user wants pstack (recommended, optional), follow [pstack.md](pstack.md) to load the actual relevant dependency files across those participants. Check artifact permissions before forwarding content; an accessible link for one agent is not shared access for everyone.
 
 Validate useful work against the role’s real resources: a permitted note/calendar/document read, a plan from shared constraints, a review, or an authorized disposable code edit. Prefer exact evidence over generic acknowledgments. Independent tool policy enforces review-only roles where required.
 
