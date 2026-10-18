@@ -60,7 +60,9 @@
         "ref": null,
         "generation": 1,
         "continuity_policy": "verify-existing-session-before-dispatch",
-        "on_missing": "mark-unavailable-reconcile-before-replacement"
+        "on_missing": "mark-unavailable-reconcile-before-replacement",
+        "invocation_kind": "REQUIRED_EXISTING_CONVERSATION_NEW_RUN_OR_PARENT_AUTOMATION_CHILD",
+        "context_source_ref": null
       },
       "capabilities": {
         "read": {
@@ -103,7 +105,19 @@
         ],
         "supported_surfaces": [],
         "peer_sender_status": "untested",
-        "effective_status": "planning-only"
+        "effective_status": "planning-only",
+        "experience": {
+          "mode": "unverified",
+          "evidence_ref": null,
+          "note": "ordinary-app, legacy-assistant, agent, or vendor-managed; independent of token type and delivery."
+        },
+        "inbound_integration": {
+          "app_id": null,
+          "account_ref": null,
+          "listener_ref": null,
+          "evidence_ref": null,
+          "note": "May differ from posting app/bot; verify its membership and visibility separately."
+        }
       },
       "resources": [
         {
@@ -134,7 +148,8 @@
           "available_skills": [],
           "dependency_receipts": [],
           "known_gaps": [],
-          "load_persistence": "REQUIRED_INSTALLED_PERSISTENT_OR_REDELIVERED_PER_TASK"
+          "load_persistence": "REQUIRED_INSTALLED_PERSISTENT_OR_REDELIVERED_PER_TASK",
+          "applicability": "Required for any personal-assistant duties, including mixed roles; optional only for a purely project role."
         }
       },
       "subscriptions": [
@@ -171,7 +186,18 @@
             "wake-every-message"
           ],
           "positive_receive_evidence": null,
-          "negative_delivery_evidence": null
+          "negative_delivery_evidence": null,
+          "receiver_health": {
+            "kind": "REQUIRED_PERIODIC_HEARTBEAT_OR_EVENT_RUN_OR_INTERACTIVE",
+            "checked_at": null,
+            "last_heartbeat_at": null,
+            "last_received_event_at": null,
+            "max_staleness_seconds": null,
+            "threshold_basis": "DERIVE_FROM_ACTUAL_RUNTIME_CADENCE_OR_EVENT_RUN_CONTRACT",
+            "evidence_ref": null,
+            "status": "unverified",
+            "note": "No universal heartbeat interval. Hidden native intake remains unobservable; a fresh observed run can prove that event, not future liveness."
+          }
         }
       ],
       "credentials": [
@@ -199,7 +225,23 @@
           "status": "template-not-provisioned",
           "note": "Reference metadata only; omit inapplicable custom credentials for managed products, explaining the vendor-owned flow."
         }
-      ]
+      ],
+      "identity_relationships": {
+        "logical_participant_id": "coordinator",
+        "parent_participant_id": null,
+        "role": "REQUIRED_INDEPENDENT_ASSISTANT_OR_DELEGATED_WORKER",
+        "runtime_ref": null,
+        "account_ref": null,
+        "decision_seat_ref": null,
+        "relationships": [],
+        "relationship_entry_shape": {
+          "other_participant_id": "REQUIRED_PARTICIPANT",
+          "dimension": "REQUIRED_ACCOUNT_RUNTIME_SESSION_MEMORY_TRANSPORT_SLACK_IDENTITY_AUTHORITY_DECISION_SEAT_OR_SUBSCRIPTION",
+          "relation": "REQUIRED_SAME_DIFFERENT_OR_UNKNOWN",
+          "evidence_ref": null
+        },
+        "note": "Optional discovery record; shared account or product does not establish shared session, memory or authority."
+      }
     },
     {
       "id": "researcher",
@@ -220,7 +262,9 @@
         "ref": null,
         "generation": 1,
         "continuity_policy": "verify-existing-session-before-dispatch",
-        "on_missing": "mark-unavailable-reconcile-before-replacement"
+        "on_missing": "mark-unavailable-reconcile-before-replacement",
+        "invocation_kind": "REQUIRED_EXISTING_CONVERSATION_NEW_RUN_OR_PARENT_AUTOMATION_CHILD",
+        "context_source_ref": null
       },
       "capabilities": {
         "read": {
@@ -263,7 +307,19 @@
         ],
         "supported_surfaces": [],
         "peer_sender_status": "untested",
-        "effective_status": "planning-only"
+        "effective_status": "planning-only",
+        "experience": {
+          "mode": "unverified",
+          "evidence_ref": null,
+          "note": "ordinary-app, legacy-assistant, agent, or vendor-managed; independent of token type and delivery."
+        },
+        "inbound_integration": {
+          "app_id": null,
+          "account_ref": null,
+          "listener_ref": null,
+          "evidence_ref": null,
+          "note": "May differ from posting app/bot; verify its membership and visibility separately."
+        }
       },
       "resources": [
         {
@@ -294,7 +350,8 @@
           "available_skills": [],
           "dependency_receipts": [],
           "known_gaps": [],
-          "load_persistence": "REQUIRED_INSTALLED_PERSISTENT_OR_REDELIVERED_PER_TASK"
+          "load_persistence": "REQUIRED_INSTALLED_PERSISTENT_OR_REDELIVERED_PER_TASK",
+          "applicability": "Required for any personal-assistant duties, including mixed roles; optional only for a purely project role."
         }
       },
       "subscriptions": [
@@ -331,7 +388,18 @@
             "wake-every-message"
           ],
           "positive_receive_evidence": null,
-          "negative_delivery_evidence": null
+          "negative_delivery_evidence": null,
+          "receiver_health": {
+            "kind": "REQUIRED_PERIODIC_HEARTBEAT_OR_EVENT_RUN_OR_INTERACTIVE",
+            "checked_at": null,
+            "last_heartbeat_at": null,
+            "last_received_event_at": null,
+            "max_staleness_seconds": null,
+            "threshold_basis": "DERIVE_FROM_ACTUAL_RUNTIME_CADENCE_OR_EVENT_RUN_CONTRACT",
+            "evidence_ref": null,
+            "status": "unverified",
+            "note": "No universal heartbeat interval. Hidden native intake remains unobservable; a fresh observed run can prove that event, not future liveness."
+          }
         }
       ],
       "credentials": [
@@ -359,7 +427,23 @@
           "status": "template-not-provisioned",
           "note": "Reference metadata only; omit inapplicable custom credentials for managed products, explaining the vendor-owned flow."
         }
-      ]
+      ],
+      "identity_relationships": {
+        "logical_participant_id": "researcher",
+        "parent_participant_id": null,
+        "role": "REQUIRED_INDEPENDENT_ASSISTANT_OR_DELEGATED_WORKER",
+        "runtime_ref": null,
+        "account_ref": null,
+        "decision_seat_ref": null,
+        "relationships": [],
+        "relationship_entry_shape": {
+          "other_participant_id": "REQUIRED_PARTICIPANT",
+          "dimension": "REQUIRED_ACCOUNT_RUNTIME_SESSION_MEMORY_TRANSPORT_SLACK_IDENTITY_AUTHORITY_DECISION_SEAT_OR_SUBSCRIPTION",
+          "relation": "REQUIRED_SAME_DIFFERENT_OR_UNKNOWN",
+          "evidence_ref": null
+        },
+        "note": "Optional discovery record; shared account or product does not establish shared session, memory or authority."
+      }
     },
     {
       "id": "implementer",
@@ -380,7 +464,9 @@
         "ref": null,
         "generation": 1,
         "continuity_policy": "verify-existing-session-before-dispatch",
-        "on_missing": "mark-unavailable-reconcile-before-replacement"
+        "on_missing": "mark-unavailable-reconcile-before-replacement",
+        "invocation_kind": "REQUIRED_EXISTING_CONVERSATION_NEW_RUN_OR_PARENT_AUTOMATION_CHILD",
+        "context_source_ref": null
       },
       "capabilities": {
         "read": {
@@ -423,7 +509,19 @@
         ],
         "supported_surfaces": [],
         "peer_sender_status": "untested",
-        "effective_status": "planning-only"
+        "effective_status": "planning-only",
+        "experience": {
+          "mode": "unverified",
+          "evidence_ref": null,
+          "note": "ordinary-app, legacy-assistant, agent, or vendor-managed; independent of token type and delivery."
+        },
+        "inbound_integration": {
+          "app_id": null,
+          "account_ref": null,
+          "listener_ref": null,
+          "evidence_ref": null,
+          "note": "May differ from posting app/bot; verify its membership and visibility separately."
+        }
       },
       "resources": [
         {
@@ -454,7 +552,8 @@
           "available_skills": [],
           "dependency_receipts": [],
           "known_gaps": [],
-          "load_persistence": "REQUIRED_INSTALLED_PERSISTENT_OR_REDELIVERED_PER_TASK"
+          "load_persistence": "REQUIRED_INSTALLED_PERSISTENT_OR_REDELIVERED_PER_TASK",
+          "applicability": "Required for any personal-assistant duties, including mixed roles; optional only for a purely project role."
         }
       },
       "subscriptions": [
@@ -491,7 +590,18 @@
             "wake-every-message"
           ],
           "positive_receive_evidence": null,
-          "negative_delivery_evidence": null
+          "negative_delivery_evidence": null,
+          "receiver_health": {
+            "kind": "REQUIRED_PERIODIC_HEARTBEAT_OR_EVENT_RUN_OR_INTERACTIVE",
+            "checked_at": null,
+            "last_heartbeat_at": null,
+            "last_received_event_at": null,
+            "max_staleness_seconds": null,
+            "threshold_basis": "DERIVE_FROM_ACTUAL_RUNTIME_CADENCE_OR_EVENT_RUN_CONTRACT",
+            "evidence_ref": null,
+            "status": "unverified",
+            "note": "No universal heartbeat interval. Hidden native intake remains unobservable; a fresh observed run can prove that event, not future liveness."
+          }
         }
       ],
       "credentials": [
@@ -519,7 +629,23 @@
           "status": "template-not-provisioned",
           "note": "Reference metadata only; omit inapplicable custom credentials for managed products, explaining the vendor-owned flow."
         }
-      ]
+      ],
+      "identity_relationships": {
+        "logical_participant_id": "implementer",
+        "parent_participant_id": null,
+        "role": "REQUIRED_INDEPENDENT_ASSISTANT_OR_DELEGATED_WORKER",
+        "runtime_ref": null,
+        "account_ref": null,
+        "decision_seat_ref": null,
+        "relationships": [],
+        "relationship_entry_shape": {
+          "other_participant_id": "REQUIRED_PARTICIPANT",
+          "dimension": "REQUIRED_ACCOUNT_RUNTIME_SESSION_MEMORY_TRANSPORT_SLACK_IDENTITY_AUTHORITY_DECISION_SEAT_OR_SUBSCRIPTION",
+          "relation": "REQUIRED_SAME_DIFFERENT_OR_UNKNOWN",
+          "evidence_ref": null
+        },
+        "note": "Optional discovery record; shared account or product does not establish shared session, memory or authority."
+      }
     },
     {
       "id": "reviewer",
@@ -540,7 +666,9 @@
         "ref": null,
         "generation": 1,
         "continuity_policy": "verify-existing-session-before-dispatch",
-        "on_missing": "mark-unavailable-reconcile-before-replacement"
+        "on_missing": "mark-unavailable-reconcile-before-replacement",
+        "invocation_kind": "REQUIRED_EXISTING_CONVERSATION_NEW_RUN_OR_PARENT_AUTOMATION_CHILD",
+        "context_source_ref": null
       },
       "capabilities": {
         "read": {
@@ -583,7 +711,19 @@
         ],
         "supported_surfaces": [],
         "peer_sender_status": "untested",
-        "effective_status": "planning-only"
+        "effective_status": "planning-only",
+        "experience": {
+          "mode": "unverified",
+          "evidence_ref": null,
+          "note": "ordinary-app, legacy-assistant, agent, or vendor-managed; independent of token type and delivery."
+        },
+        "inbound_integration": {
+          "app_id": null,
+          "account_ref": null,
+          "listener_ref": null,
+          "evidence_ref": null,
+          "note": "May differ from posting app/bot; verify its membership and visibility separately."
+        }
       },
       "resources": [
         {
@@ -614,7 +754,8 @@
           "available_skills": [],
           "dependency_receipts": [],
           "known_gaps": [],
-          "load_persistence": "REQUIRED_INSTALLED_PERSISTENT_OR_REDELIVERED_PER_TASK"
+          "load_persistence": "REQUIRED_INSTALLED_PERSISTENT_OR_REDELIVERED_PER_TASK",
+          "applicability": "Required for any personal-assistant duties, including mixed roles; optional only for a purely project role."
         }
       },
       "subscriptions": [
@@ -651,7 +792,18 @@
             "wake-every-message"
           ],
           "positive_receive_evidence": null,
-          "negative_delivery_evidence": null
+          "negative_delivery_evidence": null,
+          "receiver_health": {
+            "kind": "REQUIRED_PERIODIC_HEARTBEAT_OR_EVENT_RUN_OR_INTERACTIVE",
+            "checked_at": null,
+            "last_heartbeat_at": null,
+            "last_received_event_at": null,
+            "max_staleness_seconds": null,
+            "threshold_basis": "DERIVE_FROM_ACTUAL_RUNTIME_CADENCE_OR_EVENT_RUN_CONTRACT",
+            "evidence_ref": null,
+            "status": "unverified",
+            "note": "No universal heartbeat interval. Hidden native intake remains unobservable; a fresh observed run can prove that event, not future liveness."
+          }
         }
       ],
       "credentials": [
@@ -679,7 +831,23 @@
           "status": "template-not-provisioned",
           "note": "Reference metadata only; omit inapplicable custom credentials for managed products, explaining the vendor-owned flow."
         }
-      ]
+      ],
+      "identity_relationships": {
+        "logical_participant_id": "reviewer",
+        "parent_participant_id": null,
+        "role": "REQUIRED_INDEPENDENT_ASSISTANT_OR_DELEGATED_WORKER",
+        "runtime_ref": null,
+        "account_ref": null,
+        "decision_seat_ref": null,
+        "relationships": [],
+        "relationship_entry_shape": {
+          "other_participant_id": "REQUIRED_PARTICIPANT",
+          "dimension": "REQUIRED_ACCOUNT_RUNTIME_SESSION_MEMORY_TRANSPORT_SLACK_IDENTITY_AUTHORITY_DECISION_SEAT_OR_SUBSCRIPTION",
+          "relation": "REQUIRED_SAME_DIFFERENT_OR_UNKNOWN",
+          "evidence_ref": null
+        },
+        "note": "Optional discovery record; shared account or product does not establish shared session, memory or authority."
+      }
     }
   ],
   "coordination": {

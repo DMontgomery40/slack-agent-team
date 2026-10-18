@@ -27,7 +27,9 @@ Infer purpose, owners, participants, existing Slack channels, resource access, a
 
 For each participant, distinguish product/harness, exact model if exposed, account, visible identity, and actual conversation/session. Discover whether it can read, receive, wake, continue an existing session, reply, and act. Record verified, untested, unsupported, or not applicable for each capability in [team.example.json](assets/team.example.json). Read [interoperability.md](references/interoperability.md) when selecting or diagnosing a participant’s native, desktop, connector, or custom route.
 
-Before project work, every participant reads applicable context across project-root `.codex/`, `.claude/`, and all other present project harness directories. For personal assistance, create a separate private `SHARED_MEMORY.md` and have every assistant read the same revision. Follow [shared-context.md](references/shared-context.md) for both branches. All personal-assistant agents use the relevant [pstack skills](references/pstack.md), regardless of harness; record how each loads the same reviewed source.
+When Grok Bot and Cursor overlap, resolve the actual assistant, model-in-runtime, and delegated worker through [grok-cursor-identity.md](references/grok-cursor-identity.md). When creating tokens or diagnosing APP versus AGENT, read [slack-apps-and-agents.md](references/slack-apps-and-agents.md); a Slack feature, bot identity, credential, and running agent are separate layers.
+
+Before project work, every participant reads applicable context across `.codex/`, `.claude/`, other present project harness directories, and relevant nested instructions. For personal assistance, create a separate private `SHARED_MEMORY.md` and have every assistant read the same revision. Follow [shared-context.md](references/shared-context.md) for boundaries and approved external pointers in both branches. All personal-assistant agents use the relevant [pstack skills](references/pstack.md), regardless of harness; record how each loads the same reviewed source.
 
 **Done:** each requested participant has a named route, owner, capability record, and unresolved gates. A model with the same name is not a replacement for the user's existing assistant and memory.
 
@@ -39,7 +41,7 @@ Set the audience and purpose for each channel or DM. Keep personal context priva
 
 Read [notifications.md](references/notifications.md) whenever subscribing a participant or switching all messages ↔ mentions only; apply the actual runtime control and verify positive/negative delivery. Read [credentials-and-lifecycle.md](references/credentials-and-lifecycle.md) when adding credentials or separating temporary projects from persistent personal assistants.
 
-Support Follow conversation, Follow assigned work, Mentions only, and Muted as explicit per-participant/channel preferences where the route permits. Choose from the user's requested behavior; otherwise begin with assigned work and expose how to enable broader delivery. Separate receiving context, waking a model, replying publicly, and authorization to execute. Preserve useful peer context without an acknowledgment chorus.
+Support Follow conversation, Follow assigned work, Mentions only, and Muted as explicit per-participant/channel preferences where the route permits. Use the requested behavior and the defaults in the notification guide. Separate receiving context, waking a model, replying publicly, and authorization to execute. Preserve useful peer context without an acknowledgment chorus.
 
 For custom routes read [delivery-and-recovery.md](references/delivery-and-recovery.md) and select [manifest templates](assets/README.md). Keep credentials outside the package and distinguish bot, app-level, signing, provider, and provisioning secrets. When a provider claim is uncertain or stale, use [source references](references/research.md) to recheck its current official documentation.
 
@@ -60,3 +62,5 @@ Run applicable checks from [acceptance.md](assets/acceptance.md), including the 
 Save a redacted roster, preferences, configuration/version references, evidence, operator, and stop/recovery instructions in an agent-selected reachable private setup location, respecting any existing user preference. Keep installed skill files reusable. Mark manual relay, interactive desktop, notification-only, analysis-only, and action-capable routes accurately, with tested surfaces and availability.
 
 Finish with what works, what remains untested or unavailable, and the exact next owner action. Do not call installed apps, prepared templates, or a fresh substitute chat an operational connection to an existing assistant.
+
+**Done:** the requested capabilities have current evidence or named access gaps, the private operating record is saved, and the user has the working destination plus an accurate availability statement.

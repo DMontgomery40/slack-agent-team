@@ -1,5 +1,7 @@
 # Team acceptance record
 
+Completed by the setup agent from authorized context; this is not a human form.
+
 Purpose / participant / date / operator: REQUIRED
 Route, account, intended session, configuration revision: REQUIRED
 Expected capability and availability: REQUIRED
@@ -9,6 +11,7 @@ Record PASS, FAIL, PENDING, or N/A with a reason. All checks begin PENDING. N/A 
 | Check | Evidence | Result |
 | --- | --- | --- |
 | Identity and audience | Correct account/workspace/app/bot/user/session; permitted destination | PENDING |
+| Receiver access | Actual receiving credential reads the requested public/private surface; a differently authorized connector's success is separate relay evidence | PENDING |
 | Human round trip | Unique request, receipt/task ID, actual reply | PENDING |
 | Peer round trip | Actual peer/coordinator sender, intended recipient, useful result or unsupported boundary | PENDING |
 | Session continuity | Authorized harmless nonce planted in the existing session and unavailable in relayed Slack history; follow-up plus session-reference evidence | PENDING |
@@ -17,8 +20,8 @@ Record PASS, FAIL, PENDING, or N/A with a reason. All checks begin PENDING. N/A 
 | Shared project context | Every participant read applicable cross-harness context and same reconciled revision | PENDING |
 | Shared personal memory | Authorized participants use same revision, honor a correction, and respect reader/writer boundaries | PENDING |
 | pstack across personal assistants | Source/revision/load method per participant; relevant skill used on a bounded task | PENDING |
-| Subscription readback | Desired/effective modes, loaded actual control/filter generation, member/grant state | PENDING |
-| Positive automatic receipt | Intake evidence before follow-up; nonce readback alone is not push proof | PENDING |
+| Subscription readback | Desired/effective modes, loaded actual control/filter generation, member/grant state; receiver process/heartbeat/run evidence timestamped after test start. Stale status alone stays PENDING | PENDING |
+| Positive automatic receipt | Intake evidence before follow-up; nonce readback alone is not push proof. Vendor-reported run payloads are attributed evidence, not independently exported receiver logs | PENDING |
 | Negative non-delivery | Mentions/mute filter evidence or safe no-history fixture; silence alone insufficient | PENDING |
 | Thread and DM coverage | Separate surface tests and explicit unsupported boundaries | PENDING |
 | Audience and authority isolation | Unknown sender/route rejected; safe private-context fixture stays private; permitted tool scope enforced | PENDING |

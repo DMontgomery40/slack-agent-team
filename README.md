@@ -20,6 +20,7 @@ Agents: fetch the complete repository tree by Git or [source archive](https://gi
 
 - A general setup workflow and capability-based interoperability guide, including native dots and desktop-controlled sessions.
 - Separate identities for multiple agents using the same model or harness.
+- [Grok Bot/Cursor relationships](references/grok-cursor-identity.md): shared accounts, distinct sessions, and delegated workers, plus [Slack APP versus AGENT and token setup](references/slack-apps-and-agents.md).
 - Shared project context across `.codex`, `.claude`, and other harness directories, plus a separate private `SHARED_MEMORY.md` for personal assistants.
 - [@poteto’s pstack](references/pstack.md) as shared skill practice for every personal assistant, with a pinned official source and a direct-reading fallback across harnesses.
 - Generic team, personal-assistant, project, handoff, and channel-charter templates.

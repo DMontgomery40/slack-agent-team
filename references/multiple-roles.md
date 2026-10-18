@@ -14,7 +14,7 @@ For a custom Slack relay, give each separately visible teammate its own Slack ap
 | Visible Slack name | QA lead · project | Architecture lead · project |
 | Harness | Selected harness | May be the same harness |
 | Model and reasoning | Selected model/settings | May be different or identical |
-| Slack app and bot user | Separate app A and bot-user U IDs | Different app A and bot-user U IDs |
+| Slack app and bot user | Separate app A and bot-user U IDs | Different app B and bot-user U IDs |
 | Bot token reference | `secret-store/PROJECT/qa-lead/slack-bot` | `secret-store/PROJECT/architecture-lead/slack-bot` |
 | Actual runner session | Dedicated QA session | Dedicated architecture session |
 | Instructions and authority | Test strategy, verification, defect reporting | System design, interfaces, technical decisions within assigned authority |

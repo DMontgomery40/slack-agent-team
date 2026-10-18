@@ -4,7 +4,7 @@
   "channel_id": "REQUIRED_CHANNEL_ID",
   "participant_id": "REQUIRED_PARTICIPANT",
   "session_ref": "REQUIRED_SESSION_OR_VENDOR_REFERENCE",
-  "desired_mode": "follow-conversation",
+  "desired_mode": "follow-assigned-work",
   "effective_mode": null,
   "status": "planning-not-applied",
   "actual_control_ref": "REQUIRED_SUPPORTED_UI_TOOL_OR_RUNTIME_CONFIG",
@@ -31,5 +31,16 @@
     "wake-every-message"
   ],
   "positive_receive_evidence": null,
-  "negative_delivery_evidence": null
+  "negative_delivery_evidence": null,
+  "receiver_health": {
+    "kind": "REQUIRED_PERIODIC_HEARTBEAT_OR_EVENT_RUN_OR_INTERACTIVE",
+    "checked_at": null,
+    "last_heartbeat_at": null,
+    "last_received_event_at": null,
+    "max_staleness_seconds": null,
+    "threshold_basis": "DERIVE_FROM_ACTUAL_RUNTIME_CADENCE_OR_EVENT_RUN_CONTRACT",
+    "evidence_ref": null,
+    "status": "unverified",
+    "note": "No universal heartbeat interval. Hidden native intake remains unobservable; a fresh observed run can prove that event, not future liveness."
+  }
 }

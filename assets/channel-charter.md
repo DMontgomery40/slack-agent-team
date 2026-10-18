@@ -1,5 +1,7 @@
 # Team channel charter
 
+Completed by the setup agent from authorized context; this is not a human form.
+
 Purpose: REQUIRED
 Human owners: REQUIRED
 Participant roster and how to address each: REQUIRED

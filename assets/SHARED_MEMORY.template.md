@@ -1,5 +1,7 @@
 # Shared personal-assistant memory
 
+Completed by the setup agent from authorized context; this is not a human form.
+
 Status: TEMPLATE — create the real file in a private shared location outside the public skill checkout.
 
 User/owner: REQUIRED

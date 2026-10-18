@@ -4,6 +4,8 @@ The setup agent performs these steps through available authenticated tools, desk
 
 ## Choose credential ownership before creating tokens
 
+First distinguish the Slack app, bot user, workspace installation, token and Agent experience using [slack-apps-and-agents.md](slack-apps-and-agents.md). An AGENT label does not require a special agent-token type. For Grok Bot/Cursor, inspect the [native per-bot connection](grok-cursor-identity.md) before creating a custom app or asking for credentials.
+
 | Situation | Recommended ownership | End of use |
 | --- | --- | --- |
 | Separate one-off project with distinct access/retirement needs | Dedicated custom Slack app/install, external secret namespace, runner session, resource credentials where appropriate, and project budget | Stop intake, reconcile work, retire project resources and revoke only dedicated credentials |

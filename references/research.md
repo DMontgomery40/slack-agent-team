@@ -44,12 +44,12 @@ When rotation is enabled, implement the supported refresh flow and secure persis
 | Claude Tag | Organization-managed channel work on first-party Team/Enterprise plans; shared configuration and usage billing. | Record organization/channel configuration and spend owner. |
 | Earlier Claude Code Slack | Individual Pro/Max path remains only in workspaces not connected to Claude Tag. | Determine actual organization linkage; do not call every older install retired or assume all plans migrate identically. |
 | Cursor | Supports explicit repo/environment/model and worker/pool options. Public-channel settings are not a private-channel default solution. | Record actual execution location and target; use explicit supported options and verify resulting task. |
-| Grok Team Bot | Shared bot configuration, team memory, private personal notes, native Slack identity; authentication varies between personal OAuth and bot-shared key credentials. | Record who can use shared credentials, private/shared context, trigger behavior and current account eligibility. |
+| Grok Team Bot | Managed bot with a dedicated Slack app and Cursor account linking; connected-resource permissions and private/shared memory require their own checks. | Use the Grok/Cursor correction below; distinguish native installation from resource credentials and verify calling-account eligibility and triggers. |
 | Grok API-key Slack app | Distinct `@Grok` app with an xAI API key and Slack conversations/tools. | Do not infer full Team Bot or coding-runner capabilities from this install. |
 
 Sources: [Dots messaging](https://learn.chatgpt.com/docs/dots/channels), [ChatGPT in Slack](https://learn.chatgpt.com/docs/third-party/slack), [Claude Tag](https://claude.com/docs/claude-tag/overview), [Earlier Claude Code Slack](https://code.claude.com/docs/en/slack), [Cursor Slack](https://cursor.com/docs/integrations/slack), [Grok Team Bots](https://docs.x.ai/grok-bot/team-bots), [Grok API-key Slack app](https://slack.hooks.x.ai/).
 
-Caution for the Grok Team Bots source: it currently contains Cursor account/setup references. Preserve the supported conceptual distinction, but verify exact account names and setup UI in the installed product rather than copying that page's mixed-brand steps literally.
+Team Bot setup officially authorizes through Cursor and creates a dedicated per-bot Slack app, separate from the Cursor app. This is the documented relationship. Use [the identity guide](grok-cursor-identity.md) to map the installed account, assistant and worker correctly.
 
 ## Model and provider routing
 
@@ -64,3 +64,11 @@ For a documentation-only package, these are setup acceptance procedures, not cla
 ## Desktop-assisted sessions
 
 User premise: the public procedure should assume authorized desktop access and use it as far as practical. State that up front, while retaining real login/admin/tool-policy gates. Recommended route: when a product has no supported incoming API, an authorized desktop operator can target an existing session through its actual UI. Record application, window/session identity, focused input, intended recipient and task correlation; verify submission and real result before reporting delivery. Model response generation, returned message and actual tool execution are separate proofs. A local desktop that requires login/unlock/awake state is an interactive availability dependency, not an unattended hosted service. Do not invent a stable background wake-up capability from one successful UI handoff. These are operational recommendations, not claims of a vendor-supported automation API. Desktop access alone also does not change whose data a managed shared assistant may disclose.
+
+## Grok/Cursor and Slack Agent correction, October 17, 2026
+
+The initial product list did not adequately explain the overlap. Official [Team Bot documentation](https://docs.x.ai/grok-bot/team-bots) confirms Cursor account authorization with a separate Slack app per Team Bot. [Model documentation](https://prod.cursor.com/help/grok-bot/models) distinguishes managed, unreported Grok Bot models from selectable models in other Cursor runtimes. Scoped inspection of two local projects and installed app metadata corroborated distinct app/session namespaces and parent-to-cloud-worker delegation. It did not establish universal shared memory or identical participants. Use [the identity procedure](grok-cursor-identity.md).
+
+Slack's [agent documentation](https://docs.slack.dev/ai/developing-agents/) explicitly links `assistant:write` to agent features and labeling. [Agent migration](https://docs.slack.dev/ai/migrating-to-agent-messaging/) is substantive and one-way; [token types](https://docs.slack.dev/authentication/tokens/) remain a separate concern. A historical local visual test corroborated APP-to-AGENT configuration, but token survival in one reinstall is not a general guarantee. Use [the app/agent procedure](slack-apps-and-agents.md).
+
+Live dogfooding found that channel invitation and successful posting can coexist with missing private-history scope, and an old healthy status file can outlive its listener. These observations sharpen the subscription acceptance checks; they do not establish an always-on four-agent network. Private setup evidence and model consultations remain outside the public package.

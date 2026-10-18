@@ -2,22 +2,33 @@
 
 These are minimal starting points for **custom** apps, not vendor-managed apps and not installed configurations. JSON syntax is locally checked; Slack server-side validation and installation must occur during a real setup. Replace `Project Researcher` and `project-researcher` before creating each distinct role.
 
+These channel-transport manifests do not enable the full native Agent experience. For APP versus AGENT, use [the agent-feature guide](../references/slack-apps-and-agents.md); creating a bot token and enabling `agent_view` are different operations. For existing Grok Bots, inspect [their native connection](../references/grok-cursor-identity.md) before using a custom manifest.
+
 | File | Receive mechanism | Credentials |
 | --- | --- | --- |
-| [slack-polling.manifest.json](slack-polling.manifest.json) | Your runner polls public-channel history | Installed bot token |
+| [slack-polling.manifest.json](slack-polling.manifest.json) | Your runner polls public/private history in member channels | Installed bot token |
 | [slack-socket.manifest.json](slack-socket.manifest.json) | Socket Mode delivers explicit app mentions | Installed bot token plus separate app-level token with `connections:write` |
 
 Use [notifications.md](../references/notifications.md) to apply and verify per-participant subscription changes, and [credentials-and-lifecycle.md](../references/credentials-and-lifecycle.md) for project versus persistent credential ownership.
 
-The Socket template receives mentions only. Add history permissions if the runner fetches conversation context. Bot-originated mentions need their own real acceptance check; if your receiver requires general channel message events, add `message.channels` plus `channels:history` and enforce routing filters. For private-channel history use `groups:history`; for corresponding general events use `message.groups`. A private-channel bot still needs membership.
+The polling template includes both history scopes to cover the private default and existing public channels; remove unused audience scopes before installation. The Socket template receives mentions only. Add history permissions if the runner fetches conversation context. Bot-originated mentions need their own real acceptance check; if your receiver requires general channel message events, add `message.channels` plus `channels:history` and enforce routing filters. For private-channel history use `groups:history`; for corresponding general events use `message.groups`. A private-channel bot still needs membership.
 
 Other optional operations: `channels:read`/`groups:read` for relevant discovery and metadata, `users:read` for user-profile checks, `channels:join` for public self-join, `reactions:write` for reactions. Select additional scopes from the actual methods used. The templates rely on an authorized workspace user adding bots to known channels; they do not give workers channel creation/invitation authority.
 
 Leave `chat:write.public`, file access, user tokens, and DMs out until the role needs them. A least-privilege manifest may not run an old helper that unconditionally calls `users.info`; either add its justified scope or adapt the identity check. Review actual granted scopes after installation.
 
-## Agent-applied mentions → all public messages change
+## Agent-applied mentions → all messages change
 
-Merge this fragment into the existing Socket manifest; retain other needed events/scopes. This adds public-channel coverage. For private-channel coverage add `message.groups` and `groups:history` only when required. Apply the update through Slack’s supported UI/API, complete scope reauthorization/reinstallation where required, and verify actual grants and loaded runtime filters before claiming the mode changed. The JSON file itself has no effect on the running app.
+New channels default to private. For that route, merge this private-channel fragment into the existing Socket manifest, retaining other needed events/scopes. Apply through Slack's supported UI/API, complete required scope reauthorization/reinstallation, and verify granted scopes and loaded filters. The file itself does not change the running app.
+
+```json
+{
+  "oauth_config": {"scopes": {"bot": ["app_mentions:read", "chat:write", "groups:history"]}},
+  "settings": {"event_subscriptions": {"bot_events": ["app_mention", "message.groups"]}}
+}
+```
+
+For a public channel, use this public fragment instead; retain both sets if this installation serves both audiences:
 
 ```json
 {

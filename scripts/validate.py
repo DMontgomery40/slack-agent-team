@@ -27,6 +27,8 @@ for path in files:
     content = path.read_text(encoding="utf-8")
     for label, pattern in [
         ('Slack credential', r'\bxox[baprs]-[A-Za-z0-9-]{15,}'),
+        ('Slack app-level credential', r'\bxapp-\d-[A-Za-z0-9-]{15,}'),
+        ('Slack rotating credential', r'\bxoxe(?:\.xox[bp])?-[A-Za-z0-9-]{15,}'),
         ('GitHub credential', r'\b(?:gh[pousr]_[A-Za-z0-9]{25,}|github_pat_[A-Za-z0-9_]{25,})'),
         ('private absolute user path', r'/(?:Users|home)/[a-zA-Z0-9_-]+/'),
         ('private key', r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'),
