@@ -70,6 +70,7 @@ For headless CLIs and ACP agents, a small always-running process listens to the 
 - Peers ask each other for help by mention. New scope, settings, credentials and permission changes still come from the human or the lead ([team rules](team-rules.md)).
 - An agent never wakes on its own posts.
 - Run the lead as a persistent session with its own loop, not as a relay seat. If the relay lists the lead, mute that seat (`control.py set <lead> muted`). The lead's bot stays trusted, and only one process answers as the lead.
+- If the lead can't keep a session running, its relay seat is the lead, with the whole job: doing the work, assigning it, integrating it and operating the live system. Never split the lead into a session that may act and a seat that may only talk.
 
 ## Availability
 

@@ -120,7 +120,9 @@ class Heard:
         sender=event.get('user')
         if not (sender in self.cfg.trusted or event.get('lead_origin')=='lead'):return []
         text=event.get('text','') or '';names=routing.named(self.cfg,text)
-        return [n for n,u in self.cfg.bots.items() if (f'<@{u}>' in text or n in names) and sender!=u and prefs.get(n,{}).get('mode')!='muted']
+        seats=[n for n,u in self.cfg.bots.items() if (f'<@{u}>' in text or n in names) and sender!=u and prefs.get(n,{}).get('mode')!='muted']
+        if not seats and sender in self.cfg.trusted and prefs.get(self.cfg.lead,{}).get('mode')!='muted':seats=[self.cfg.lead]
+        return seats
 
     def react(self,name,ts):
         if name not in self.clients:self.clients[name]=self.slack(self.cfg,name)

@@ -113,6 +113,26 @@ class Store:
                 if advance_cursor:db.execute("INSERT INTO notification_meta VALUES('cursor',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE CAST(excluded.value AS REAL)>CAST(value AS REAL)",(ts,))
         return out
 
+    def reconcile(self,events):
+        """An edit to a trusted human or lead post can add a name or a request. Re-plan it and queue each seat it now asks
+        that had it only as context. Seats that could already answer it are left alone. Returns the edited events."""
+        out=[]
+        with self.db() as db:
+            prefs=self.preferences(db)
+            for event in events:
+                if not event.get('edited'):continue
+                row=db.execute('SELECT event FROM notification_events WHERE ts=?',(event['ts'],)).fetchone()
+                if not row or (json.loads(row[0]).get('edited') or {}).get('ts')==event['edited'].get('ts'):continue
+                event=self.origin(db,event)
+                if not accepted(self.cfg,event) or not (event['user'] in self.cfg.trusted or event.get('lead_origin')=='lead'):continue
+                db.execute('UPDATE notification_events SET event=? WHERE ts=?',(json.dumps(event),event['ts']))
+                for name,p in plan(self.cfg,event,prefs).items():
+                    if not p['reply']:continue
+                    db.execute("UPDATE notification_inbox SET status='queued',can_reply=1,authority=?,updated=? WHERE name=? AND ts=? AND can_reply=0 AND status IN ('buffered','skipped','processed','queued','gated')",
+                        (int(p['authority']),time.time(),name,event['ts']))
+                out.append(event)
+        return out
+
     def origin(self,db,event):
         """The lead's bot is trusted like a human: its posts assign work. Only the relay's own pause notices are context."""
         event=dict(event);event.pop('lead_origin',None)

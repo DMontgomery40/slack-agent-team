@@ -37,12 +37,13 @@ def is_request(cfg,text):
 BULLET=re.compile(r'^\s*(?:[-*\u2022>]+|\d+[.)])?\s*')
 IMPERATIVE=VERBS+r"|run|test|fix|write|read|look|investigate|verify|update|add|post|report|take|handle|prepare|audit|try|find|send|share|give|make|start|finish"
 def addressed_lines(cfg,text):
-    """Seats addressed explicitly at the start of any line ("- Codex: run the tests."), when the rest of the line asks for something.
-    A roster line ("Codex: Model A") is not a request."""
+    """Seats addressed explicitly at the start of any line. "Codex, classify the links." assigns work whatever the verb.
+    After a colon ("- Codex: run the tests.") the rest must ask for something: a roster line ("Codex: Model A") or a verdict ("Codex: PASS confirmed.") is not a request."""
     out=set()
     for line in text.splitlines():
         prefix,body=address(cfg,BULLET.sub('',line).replace('*',''))
-        if prefix.rstrip().endswith((',',':')) and (is_request(cfg,body) or re.match(r'(?:'+IMPERATIVE+r')\b',body.strip(),re.I)):out|=set(named(cfg,prefix))
+        end=prefix.rstrip()[-1:]
+        if (end==',' and body.strip()) or (end==':' and (is_request(cfg,body) or re.match(r'(?:'+IMPERATIVE+r')\b',body.strip(),re.I))):out|=set(named(cfg,prefix))
     return out
 
 def plan(cfg,event,prefs):
@@ -56,17 +57,19 @@ def plan(cfg,event,prefs):
     initiator=human or lead
     authority=human or sender==cfg.bots[cfg.lead]
     mentions=[n for n,u in cfg.bots.items() if f'<@{u}>' in text]
-    names=named(cfg,text);request=is_request(cfg,text);everyone=bool(EVERYONE.search(text))
+    names=named(cfg,text);asked=is_request(cfg,text);everyone=bool(EVERYONE.search(text))
+    # A trusted human's top-level post always goes to someone: the seat it names, else the lead. It never sits unread.
+    request=asked or human
     lines=addressed_lines(cfg,text) if initiator else set()
     responders=set(mentions)|lines
-    if request and everyone:responders=set(cfg.bots)
+    if asked and everyone:responders=set(cfg.bots)
     elif lines:pass
     elif request and names:
         prefix=address(cfg,text)[0]
         # A seat mentioned in passing is not asked. The lead must address explicitly ("Grok, ..."); humans fall back to the first name.
         if lead:responders|=set(named(cfg,prefix)) if prefix.rstrip().endswith((',',':')) else set()
         else:responders|=set(named(cfg,prefix) or names[:1])
-    elif request and not mentions and human:  # an untagged lead request is context; the lead does not answer itself
+    elif not mentions and human:  # an untagged human post goes to the lead; an untagged lead post does not wake the lead itself
         owner=[n for n in cfg.bots if prefs.get(n,{}).get('mode')=='follow_assigned' and any(t.lower() in text.lower() for t in prefs.get(n,{}).get('topics',[]) if t)][:1]
         responders=set(owner or [cfg.lead])
     out={}
@@ -74,7 +77,7 @@ def plan(cfg,event,prefs):
         p=prefs.get(n,{});mode=p.get('mode','follow_conversation')
         if mode=='muted' or sender==u:continue
         # An untagged trusted-human request is addressed to whoever routing chose (usually the lead seat), so addressed-only seats still get it.
-        direct=n in mentions or n in lines or (initiator and request and (everyone or n in names)) or (human and request and n in responders)
+        direct=n in mentions or n in lines or (initiator and ((asked and everyone) or (request and n in names))) or (human and n in responders)
         relevant=any(t.lower() in text.lower() for t in p.get('topics',[]) if t)
         if mode=='follow_conversation' or direct or (mode=='follow_assigned' and relevant):
             # A teammate's @-mention asks for help, so the mentioned seat may answer it.

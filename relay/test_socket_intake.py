@@ -52,6 +52,11 @@ class History:
         self.oldest.append(data['oldest'])
         return {'ok':True,'messages':[dict(m) for m in self.messages if float(m['ts'])>float(data['oldest'])]}
 
+def inbox(store,ts):
+    with store.db() as db:return {r[0]:(r[1],r[2]) for r in db.execute('SELECT name,status,can_reply FROM notification_inbox WHERE ts=?',(ts,))}
+def event_row(store,ts):
+    with store.db() as db:return db.execute('SELECT event FROM notification_events WHERE ts=?',(ts,)).fetchone()[0]
+
 def stored(store):
     with store.db() as db:return [r[0] for r in db.execute('SELECT ts FROM notification_events ORDER BY CAST(ts AS REAL)')]
 
@@ -174,6 +179,29 @@ class ReconnectTests(SocketCase):
         fresh=poll_once(self.cfg,self.s,history,'0')
         self.assertEqual(history.oldest[-1],'19.000100');self.assertEqual([e['ts'] for e in fresh],['20.000100'])
         self.assertEqual(stored(self.s),['19.000100','20.000100','20.000200']);self.assertEqual(self.s.cursor('0'),'20.000200')
+    def test_edit_that_adds_a_mention_wakes_that_seat(self):
+        # Live miss: a post edited to add "@Claude Code" after intake stayed buffered context and nobody answered.
+        s=self.s;s.preference('claude','mentions_only');s.preference('codex','mentions_only')
+        ts=f'{time.time()-120:.6f}';later=f'{time.time()-60:.6f}'  # history reads reach back an hour for edits
+        history=History(self.cfg,[{'user':HUMAN,'text':'Codex, what changed?','ts':ts}])
+        poll_once(self.cfg,s,history,'0',self.heard)
+        self.assertEqual(inbox(s,ts)['claude'],('buffered',0))
+        history.messages=[{'user':HUMAN,'text':f'Codex, what changed? <@{BOT["claude"]}>','ts':ts,'edited':{'user':HUMAN,'ts':later}}]
+        poll_once(self.cfg,s,history,'0',self.heard)
+        self.assertEqual(inbox(s,ts)['claude'],('queued',1))
+        self.assertEqual(inbox(s,ts)['codex'],('queued',1),'a seat that could already answer is left as it was')
+        self.assertIn('<@'+BOT['claude']+'>',json.loads(event_row(s,ts))['text'])
+        # The same edit seen again changes nothing, and a seat that already answered is never re-queued.
+        with s.db() as db:db.execute("UPDATE notification_inbox SET status='replied' WHERE ts=?",(ts,))
+        poll_once(self.cfg,s,history,'0',self.heard)
+        self.assertEqual(inbox(s,ts)['claude'],('replied',1))
+        self.assertIn(('claude',ts),self.seats.reacted())
+    def test_peer_edits_are_not_replanned(self):
+        s=self.s;ts=f'{time.time()-120:.6f}';history=History(self.cfg,[{'user':BOT['grok'],'text':'Notes.','ts':ts}])
+        poll_once(self.cfg,s,history,'0')
+        history.messages=[{'user':BOT['grok'],'text':f'Notes. <@{BOT["codex"]}> please redo it','ts':ts,'edited':{'user':BOT['grok'],'ts':f'{time.time()-60:.6f}'}}]
+        poll_once(self.cfg,s,history,'0')
+        self.assertEqual(inbox(s,ts)['codex'][1],0)
     def test_close_wakes_the_poller(self):
         self.fake.on_close_listeners[0](1006,'abnormal');self.assertTrue(self.intake.wake.is_set())
 
@@ -181,8 +209,9 @@ class HeardReactionTests(SocketCase):
     def ingest(self,*events):return self.s.ingest([dict(team=TEAM,channel=CHANNEL,**e) for e in events])
     def test_trusted_post_naming_or_mentioning_seats_reacts_from_each_seat(self):
         self.heard.process(self.ingest({'user':HUMAN,'ts':'30.000100','text':f'Muse Code: thanks, great review. <@{BOT["codex"]}> too.'},{'user':HUMAN,'ts':'30.000200','text':'FYI the build is green.'}))
-        self.assertEqual(self.seats.reacted(),[('codex','30.000100'),('muse','30.000100')])
-        self.assertTrue(all(c[1:]==('reactions.add','30.000100','eyes',CHANNEL) for c in self.seats.calls))
+        # The untagged post names no seat, so the lead's bot shows it was heard.
+        self.assertEqual(self.seats.reacted(),[('claude','30.000200'),('codex','30.000100'),('muse','30.000100')])
+        self.assertTrue(all(c[1]=='reactions.add' and c[3]=='eyes' and c[4]==CHANNEL for c in self.seats.calls))
     def test_lead_post_reacts_but_not_from_its_own_seat(self):
         self.heard.process(self.ingest({'user':BOT['claude'],'ts':'31.000100','text':'Grok in Cursor: thanks. Claude Code too.'}))
         self.assertEqual(self.seats.reacted(),[('grok','31.000100')])

@@ -27,7 +27,8 @@ class ReplyPolicyTests(LabCase):
         for text in ['<!channel> what do you all think?','<!here|here> thoughts?','Everyone, what is next?','all of you: please review the plan',"y'all, any concerns?",'yall ready?','<!everyone> can you each confirm your model?']:
             self.assertEqual(replies(self.cfg,text),set(self.cfg.bots),text)
         self.assertEqual(replies(self.cfg,'Everyone, what is next?',{'grok':{'mode':'muted'},'cursor':{'mode':'mentions_only'}}),set(self.cfg.bots)-{'grok'})
-        self.assertEqual(replies(self.cfg,'<!channel> deploy is at five.'),set())
+        # An announcement is not a request to everyone; like any untagged human post it goes to the lead.
+        self.assertEqual(replies(self.cfg,'<!channel> deploy is at five.'),{self.cfg.lead})
     def test_incidental_group_words_do_not_broadcast(self):
         # Live bug: "a default for everyone" inside a seat's assignment addressed all five seats.
         cases={'Antigravity, please review the patch for any choice written as a default for everyone.':{'antigravity'},
@@ -60,7 +61,7 @@ class ReplyPolicyTests(LabCase):
         self.assertFalse(any(b['status']=='failed' for b in s.status()['blocked']))
 
     def test_heard_reaction_marks_addressed_messages_only(self):
-        # Live gap: a thanks post naming seats got no visible receipt. Addressed seats react; others stay quiet.
+        # Live gap: a thanks post naming seats got no visible receipt. Addressed seats react; an untagged post is the lead's.
         s=self.store();s.ingest([event(ts='3.001',text='Muse Code: thanks, great review.'),event(ts='3.002',text='FYI the build is green.')])
         reacted={}
         def provider(name,p):
@@ -68,7 +69,7 @@ class ReplyPolicyTests(LabCase):
             return json.dumps({'receipt':bid_of(p),'reply':None})
         for seat in self.cfg.workers():
             while process_one(s,seat,provider,lambda text,key:'9.9',react=lambda ts,seat=seat:reacted.setdefault(seat,[]).append(ts)):pass
-        self.assertEqual(reacted,{'muse':['3.001']})
+        self.assertEqual(reacted,{'muse':['3.001'],self.cfg.lead:['3.002']})
     def test_heard_reaction_failure_never_blocks_the_turn(self):
         s=self.store();s.ingest([event(text='Codex, what changed?')]);posts=[]
         def boom(ts):raise RuntimeError('Slack API returned missing_scope')
@@ -115,6 +116,18 @@ class InteractiveLeadTests(LabCase):
         self.assertEqual(self.seat_replies(s,'31.001'),set())
         s.ingest([event('32.001',text='- Codex: run the tests.',user=BOT['grok'])])
         self.assertEqual(self.seat_replies(s,'32.001'),set())
+    def test_lead_comma_address_assigns_work_whatever_the_verb(self):
+        # Live bug: the lead's "Codex, classify the 22 links ..." sat unread because "classify" wasn't a listed request verb.
+        text=('Codex: PASS confirmed. The receipt finding was a good one.\n\nFollowing up on the smoke failure: 22 links return 503.\n\n'
+            'Codex, classify the 22 links that return 503 by root cause. Budget: 20 tool calls.')
+        s=self.store();s.ingest([event('33.001',text=text,user=BOT['claude'])])
+        self.assertEqual(self.seat_replies(s,'33.001'),{'codex'})
+        cases={'Grok in Cursor, dig into the flaky socket test.':{'grok'},'- *Muse Code*, benchmark the planner prompt.':{'muse'},
+            'Antigravity and Cursor Composer, triage the 404s.':{'antigravity','cursor'},'Codex: PASS confirmed.':set(),'Codex: Model A, coding agent':set()}
+        for i,(line,expected) in enumerate(cases.items()):
+            ts=f'34.{i:03d}';s.ingest([event(ts,text=line,user=BOT['claude'])]);self.assertEqual(self.seat_replies(s,ts),expected,line)
+        s.ingest([event('35.001',text='Codex, classify the links.',user=BOT['grok'])])
+        self.assertEqual(self.seat_replies(s,'35.001'),set())
     def test_seat_answered_elsewhere_gets_context_only(self):
         s=self.store();s.mark_answered('codex','6.001','6.9')
         s.ingest([event('6.001',text='Codex and Grok, please check the tests.',user=BOT['claude'])])

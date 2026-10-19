@@ -78,6 +78,8 @@ launchctl bootout gui/$(id -u)/com.example.slack-agent-team.relay.<name>   # sto
 
 On Linux, any supervisor works (for example, a systemd user unit with `Restart=always`).
 
+Before restarting a relay, run `control.py show` and wait until `active` is empty. A restart kills any turn in progress and leaves that seat blocked as `ambiguous` until you resolve it.
+
 ## control.py
 
 All commands take `--instance instances/<name>`. The instance directory must be owner-only.
@@ -105,7 +107,7 @@ All commands take `--instance instances/<name>`. The instance directory must be 
 - Context rollover is not built yet. Each seat resumes one session per channel indefinitely. Usage is recorded per batch, but nothing moves a seat to a fresh session automatically.
 - The fallback from a dropped live socket to polling is verified only by tests with a fake socket, not against a live Slack outage.
 - There is no `reactions:read` by default. The relay adds 👀 reactions but cannot see reactions.
-- Edits and deletes are ignored. A locked cursor-agent seat can still write to `/tmp`. A Muse approval prompt can hold that seat's queue until `timeout_seconds` runs out.
+- An edit that adds a name or a request is re-read for an hour after the post; deletes are ignored. A locked cursor-agent seat can still write to `/tmp`. A Muse approval prompt can hold that seat's queue until `timeout_seconds` runs out.
 
 ## Tests
 

@@ -252,7 +252,8 @@ class ACP:
 class Providers:
     """respond() returns {'text': reply, 'usage': token/context usage as reported by the CLI} for the batch record."""
     def __init__(self,cfg):self.cfg=cfg
-    def timeout(self,seat):return int(self.cfg.seats[seat].get('timeout_seconds',180))
+    # A turn can be real work (a fix, a render, a review), so the default is an hour. The heard reaction is the instant receipt.
+    def timeout(self,seat):return int(self.cfg.seats[seat].get('timeout_seconds',3600))
 
     def run(self,seat,args,prompt=None):
         if locked(self.cfg.seats[seat]):assert_gated(args,prompt)

@@ -88,7 +88,7 @@
    "provider": "muse",
    "model": null,
    "model_label": "(model label)",
-   "timeout_seconds": 300,
+   "timeout_seconds": 3600,
    "executable": "/usr/local/bin/muse",
    "cwd": "work/muse",
    "tools": "harness-default",
@@ -111,7 +111,7 @@
    "tools": "harness-default",
    "shell": "sandboxed",
    "posture": "inherit",
-   "timeout_seconds": 600
+   "timeout_seconds": 3600
   },
   "cursor": {
    "bot_user_id": "U0000000006",
@@ -129,7 +129,7 @@
    "tools": "harness-default",
    "shell": "sandboxed",
    "posture": "inherit",
-   "timeout_seconds": 600
+   "timeout_seconds": 3600
   },
   "antigravity": {
    "_comment": "ACP seat. executable is the absolute path to an ACP-compatible server for this seat (Gemini CLI documents `gemini --acp`; check whether your Antigravity install ships one). home is its private state dir under the instance. A model id ending in -high/-medium/-low is split into model plus thinking level when the runtime offers them separately.",

@@ -11,10 +11,18 @@ class PolicyTests(LabCase):
         self.assertEqual(parse_result(raw+raw,'abc')['memory'],'blue')
         with self.assertRaises(ValueError):parse_result(raw+'{"receipt":"abc","reply":"conflict"}','abc')
 
-    def test_untagged_update_reaches_followers_silently(self):
-        p=self.plan(event())
-        self.assertEqual(set(p),set(self.cfg.bots))
-        self.assertFalse(any(v['reply'] for v in p.values()))
+    def test_untagged_human_post_goes_to_the_lead(self):
+        # Live miss: "fix jp video and changes need to be made regarding ..." named no one, matched no request word, and woke nobody.
+        for text in ['The review packet is blue.','fix jp video and changes need to be made regarding the latest email','deploy is at five']:
+            p=self.plan(event(text=text))
+            self.assertEqual(set(p),set(self.cfg.bots),text)
+            self.assertEqual([n for n,v in p.items() if v['reply']],[self.cfg.lead],text)
+        # The lead seat gets it even when it only listens for its name.
+        p=routing.plan(self.cfg,event(text='fix jp video'),{self.cfg.lead:{'mode':'mentions_only'}})
+        self.assertTrue(p[self.cfg.lead]['reply'])
+        # A human naming a seat without a request word still asks that seat, not the lead.
+        p=self.plan(event(text='codex fix the failing tests'))
+        self.assertEqual([n for n,v in p.items() if v['reply']],['codex'])
 
     def test_named_question_one_reply_peer_context_no_reply(self):
         p=self.plan(event(text='Antigravity, what review evidence is needed?'))

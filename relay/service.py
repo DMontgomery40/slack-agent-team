@@ -89,11 +89,15 @@ def fetch(client,oldest):
             if page.get('has_more'):raise RuntimeError('Slack pagination incomplete; cursor not advanced')
             return messages
 
-def poll_once(cfg,store,client,old,heard=None):
-    """One pass through the history cursor: reconciliation while the socket is up, intake while it is not, and the catch-up after every (re)connect."""
-    with ingest_lock(cfg):fresh=store.ingest(fetch(client,store.cursor(old)))
+def poll_once(cfg,store,client,old,heard=None,lookback=None):
+    """One pass through the history cursor: reconciliation while the socket is up, intake while it is not, and the catch-up after every (re)connect.
+    The read reaches back slack.edit_lookback_seconds (default an hour) so an edit that adds a name still wakes that seat."""
+    lookback=cfg.data['slack'].get('edit_lookback_seconds',3600) if lookback is None else lookback
+    oldest=min(float(store.cursor(old)),time.time()-lookback)
+    messages=fetch(client,f'{oldest:.6f}')
+    with ingest_lock(cfg):fresh=store.ingest(messages);edited=store.reconcile(messages)
     (cfg.dir/'watermark.json').write_text(json.dumps({'ts':store.cursor(old)}))
-    if heard:heard.submit(fresh)
+    if heard:heard.submit(fresh+edited)
     return fresh
 
 def starting_watermark(cfg):
@@ -104,7 +108,7 @@ def starting_watermark(cfg):
 
 KNOWN_LIMITS=['thread replies are not ingested; every post is top-level',
     'locked cursor-agent seats (--sandbox enabled) can still write to /tmp',
-    'muse headless approval prompts can wait until timeout_seconds (300 s) and hold the muse queue']
+    'muse headless approval prompts can wait until timeout_seconds and hold the muse queue']
 PAUSE_NOTICE={'idle':'Relay paused: no posts from {humans} or the lead for {hours} hours, so agents will not wake. The next post resumes it. No ACK needed.',
     'budget':'Relay paused: the daily limit of {turns} model turns is used up. Agents wake again as the 24-hour window frees up, or when {humans} raises the limit. No ACK needed.'}
 
@@ -159,11 +163,12 @@ def main(argv=None):
     heard=Heard(cfg,store,Slack);heard.start()
     intake=Intake(cfg,store,heard,wake=wake);intake.start()
     print(json.dumps({'ready':True,'version':3,'instance':cfg.name,'channel':cfg.channel,'providers':cfg.workers(),'contextOnly':[n for n in cfg.seats if not cfg.can_reply(n)],'posture':{n:cfg.posture(n) for n in cfg.workers()},'pollSeconds':cfg.poll_seconds,'threadIntake':False,'intake':intake.health()}),flush=True)
-    last_poll=None
+    last_poll=None;first=True
     while not stopped.is_set():
         error=None;wake.clear();intake.ensure()
         try:
-            poll_once(cfg,store,client,old,heard)
+            # After a restart, look further back for edits made while the relay was down.
+            poll_once(cfg,store,client,old,heard,lookback=6*3600 if first else None);first=False
             last_poll=time.time()
             announce_pause(cfg,store,lambda text:client_lead.post(text,'pause:'+text[:40]+str(int(time.time()//3600))))
         except Exception as exc:

@@ -127,7 +127,7 @@ class UsageTests(unittest.TestCase):
 class TimeoutTests(LabCase):
     def test_per_seat_timeouts(self):
         p=providers.Providers(self.cfg)
-        self.assertEqual((p.timeout('muse'),p.timeout('claude')),(300,180))
+        self.assertEqual((p.timeout('muse'),p.timeout('claude')),(3600,3600))
 
 class ParseTests(unittest.TestCase):
     def test_claude_error_and_wrong_model_not_success(self):
