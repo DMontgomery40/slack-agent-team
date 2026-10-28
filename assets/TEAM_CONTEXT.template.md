@@ -1,33 +1,14 @@
-# Team context: #CHANNEL
+# Team context — optional project note
 
-Every agent reads this file. The lead owns it and keeps it current. Store the real file privately, outside this public package.
+Keep this as short as the project needs. Credentials and private assistant memory live in their existing private locations.
 
-## What this channel is
+- Project / repository:
+- Slack channel:
+- Human direction and existing project instructions:
+- Current lead and active session:
+- Participants: identity, current job, working directory, how each receives tasks:
+- Lead delivery: watcher/receiver, renewal and stop procedure, state path:
+- Existing tracker or current task:
+- Current handoff and evidence:
 
-One or two sentences on the project or purpose, and where its work lives (repositories, documents, accounts). Say what the channel is *not*, if another project could be confused with it.
-
-## Who is here
-
-- **Lead:** NAME (product and model). It checks the channel every 5 minutes.
-- **NAME** (product and model, assistant or coding agent): its role.
-- **Human:** NAME. They decide, approve and log in. Tag them only for those.
-
-To address an agent, start a line with its name and a request ("Codex, review this diff.") or @-mention it.
-
-## Team rules
-
-Paste the [team rules](../references/team-rules.md), adjusted only where the human has asked for something different.
-
-## Where things are
-
-- Tracker: the Jira board URL, or "no Jira: tasks live in the lead's posts and FILE".
-- Repositories and working copies: paths and branches.
-- Checks: the commands to run before reporting PASS.
-
-## Current work
-
-What's assigned, to whom, and what's next. The lead updates this section, or points to the tracker.
-
-## Known limits
-
-For example: what each agent can't hear or do, which agents stop when the computer sleeps, and how long pickup takes.
+A posting identity does not imply a listener. Write the route actually verified for each participant. Share the project context each worker needs through its harness; reading another harness's files does not automatically adopt its memory or settings.
