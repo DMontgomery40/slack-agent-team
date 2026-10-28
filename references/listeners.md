@@ -1,77 +1,73 @@
-# How each agent hears the channel
+# Receiving Slack messages
 
-Adding a bot to a channel doesn't make it read the channel. Each participant needs something that delivers new posts to it. For each participant, use the first route below that works. Then record the route in the setup record and test it with a real post.
+The observed BetKalshi route is:
 
-## 1. Its own loop: agents that keep a session
+```text
+Slack Web API → Python watcher → Claude Code Monitor → existing lead session
+                                                      ↓
+                                            CLI task + written brief
+                                                      ↓
+                                                Codex / Muse
+                                                      ↓
+                                     files + Slack post using worker token
+```
 
-Use this whenever possible. The agent keeps its full context and memory between wakes. The lead always runs this way.
+Slack API polling and model polling have different costs. The Python watcher checks history every 20 seconds, prints only new relevant output, and makes no model calls. Monitor feeds that output into Claude. An empty check does not start a model turn. New-message events and Monitor expiry/renewal still consume attention; a busy channel is not free.
 
-On each wake, the loop does the same four things:
-1. Read channel messages newer than the timestamp it saved last time.
-2. Act only on what's new for it: answer, take an assigned task, follow up.
-3. Stay quiet when nothing changed. Never post unchanged status.
-4. Save the newest timestamp it processed.
+## Claude lead: the observed route
 
-Each agent reads and posts with its own bot token, through a small script with two commands, `history` and `post`. The script:
-- reads the token from a private file (mode 600) outside any repository;
-- checks the bot identity with `auth.test` before posting;
-- refuses any channel outside the team's channels.
+Use the existing watcher if it works. The live source and limits are recorded in [betkalshi-evidence.md](betkalshi-evidence.md). The portable [helper](../scripts/slack.py) has the same basic delivery behavior with environment-based configuration.
 
-**Codex desktop app**
-- Attach a heartbeat automation to the agent's chat that runs every 5 minutes.
-- Create it with the app's automation tool. Editing the automation's file on disk doesn't change the running schedule.
-- Keep one heartbeat per role. When a new chat takes over, move the same heartbeat to it rather than creating a second one, and stop the old chat coordinating.
+The setup agent supplies `SLACK_BOT_TOKEN` and `SLACK_CHANNEL_ID` through the existing local secret mechanism, and creates a private writable state directory. Keep one watcher and one state file for this lead/channel. Test identity with:
 
-**Claude Code interactive session**
-- Run `/loop 5m <the loop prompt>` in the session.
-- Loops fire only while the session is open and idle.
-- A fixed-interval loop expires after 7 days, so re-arm it weekly.
-- `--resume` restores unexpired scheduled tasks.
-- To stop a loop, ask Claude to cancel it, or run `CronDelete <id>`.
-- For faster pickup during active work, a Monitor command can print each new message as it arrives. Each Monitor watch ends after at most 30 minutes, so re-arm it.
+```sh
+python3 scripts/slack.py auth
+python3 scripts/slack.py history
+```
 
-Sources, checked October 18, 2026: [scheduled tasks](https://code.claude.com/docs/en/scheduled-tasks), [Monitor](https://code.claude.com/docs/en/tools-reference#monitor-tool).
+Ask Claude to call its **Monitor tool**, rather than running a detached shell command and assuming stdout will reach Claude:
 
-**Other harnesses** (Muse Code, Hermes, OpenClaw and others): use the harness's own scheduler, or a small watcher process that prints new mentions into the running session.
+```json
+{
+  "command": "python3 -u scripts/slack.py watch --state /private-state/lead-seen.txt",
+  "description": "new project Slack messages",
+  "timeout_ms": 1800000
+}
+```
 
-**Cadence:** the lead wakes every 5 minutes. During active work, every agent reads fresh history at least every 2 minutes. Polling isn't instant, so tell the user how long pickup can take.
+Run from the package directory, or use absolute paths. `/private-state/lead-seen.txt` is a placeholder; the setup agent supplies the actual writable path. The selected token is inherited by the Monitor command. `--token-env NAME`, placed before `watch`, selects another environment variable when preserving existing credential names.
 
-## 2. Vendor Slack bots
+On first run a new state file seeds the currently visible history without emitting it. Read history explicitly when taking over a channel. On every Monitor expiry notice, re-arm the watcher with the same state path. After a gap or a session restart, read missed history separately, including threads where relevant. Confirm a successor has an active watcher before retiring its predecessor.
 
-Vendor bots use their own triggers: ChatGPT dots, Claude Tag, Grok Bot routines and the Cursor app ([participants.md](participants.md)).
-- Many vendor bots treat a bot's @-mention differently from a human's. Test each one with a real post from the lead's bot.
-- Record exceptions, such as a bot that only replies in threads. The lead re-posts those results top-level.
+[Anthropic's Monitor reference](https://code.claude.com/docs/en/tools-reference#monitor-tool), checked 28 October 2026, documents line-by-line delivery into the same session and a 30-minute maximum for an interactive watch. Tool availability can depend on the installed version and provider. Inspect the actual session. A shell process printing messages is not itself proof of model delivery.
 
-## 3. A bridge or the relay: agents that can't keep a session
+### Inherited limitations
 
-For headless CLIs and ACP agents, a small always-running process listens to the channel on the agent's behalf and runs it with each message.
+- Last 30 top-level posts; no pagination or complete outage recovery.
+- For parents still in that window, reads up to 50 thread entries when the latest reply is within two hours. Older parents/replies can be missed.
+- Suppresses the lead's own posts, `channel_join` and `bot_add`. Other workers' posts can reach the lead without a mention.
+- Emits at most 600 characters of normalized text per message. Fetch full history/thread content for the task; files, blocks and attachments need their own reads.
+- Deduplication is a local seen-timestamp file, not a durable model-delivery acknowledgment. Printing a line and recording it does not prove Claude acted on it. The state grows over time and concurrent use of one state file is unsupported.
+- The portable watcher warns on unavailable thread reads while continuing top-level intake. Its read loop backs off for HTTP 429 `Retry-After`, including a rate limit during display-name lookup. Initial authentication and one-shot commands report failures and exit. Check actual Slack quotas and grants before copying the 20-second interval. It can be changed with `--interval`.
 
-**Mention bridge, for one agent**
-- Listens over Socket Mode and wakes the agent when it's mentioned.
-- Resumes the same session each time, so the agent keeps its context.
-- Posts the reply top-level. A reply of `NO_REPLY` isn't posted.
-- Skips duplicates by channel and timestamp.
-- Runs as one process per agent, enforced with a file lock.
-- On a failed delivery, stops and lets launchd restart it, without replaying the message.
+These bounds come from the working script. More reliable intake is possible, but is additional implementation work.
 
-**[Reference relay](../relay/README.md), for several agents in one channel**
-- Reads the channel by polling, or by Socket Mode.
-- Wakes each agent when it's named with a request ("Codex, run the tests") or @-mentioned.
-- Keeps one session per agent per channel.
-- Enforces the daily turn limit and the idle pause.
+## Codex and Muse: direct tasks in the inspected setup
 
-**Permissions:** a relay seat runs headless, with nobody to approve anything. If the user runs a harness without approvals, set `"yolo": true` on its seat ([relay README](../relay/README.md)), so the seat can edit files and run commands the way the user's own sessions do.
+The lead launches an authenticated CLI with a brief and working directory. The observed command forms include `codex --search exec …` and `muse exec … --prompt-file …`. It reads their output/files and integrates the results. Workers receive enough project context and their brief; context does not automatically transfer across harnesses.
 
-**Socket Mode limit:** Slack delivers each event to only one of an app's open connections. If two processes use the same app token, they split the events between them. Run one Socket Mode listener per app, and have any other listener on that app poll instead.
+The inspection found actual task-specific runs. It did not establish an active independent mention receiver for either worker. A tagged Slack assignment is visible coordination; the separate CLI invocation is what starts these observed workers. Do not tell users a tag will wake an idle session unless you have verified a receiver for that session.
 
-## Who starts work
+For a worker's authorized channel reply, the setup agent provides that worker's own token and channel through its environment. The helper reads text from stdin, so message text stays out of shell interpolation:
 
-- The human and the lead assign work. The lead's posts count as assignments.
-- Peers ask each other for help by mention. New scope, settings, credentials and permission changes still come from the human or the lead ([team rules](team-rules.md)).
-- An agent never wakes on its own posts.
-- Run the lead as a persistent session with its own loop, not as a relay seat. If the relay lists the lead, mute that seat (`control.py set <lead> muted`). The lead's bot stays trusted, and only one process answers as the lead.
-- If the lead can't keep a session running, its relay seat is the lead, with the whole job: doing the work, assigning it, integrating it and operating the live system. Never split the lead into a session that may act and a seat that may only talk.
+```sh
+python3 scripts/slack.py --token-env SLACK_CODEX_BOT_TOKEN post < result-message.txt
+```
 
-## Availability
+It posts top-level and does not invoke a model. Follow the project's existing permission settings when launching workers. A posting identity and a model/session are separate things.
 
-Local listeners only work while the computer is awake and logged in and the app or terminal is open. Note in the setup record which agents stop when the computer sleeps.
+## Historical fallback and other transports
+
+An older Claude lead session used a five-minute scheduled history check alongside Monitor. That check caught a join which the watcher excluded. The current inspected lead transcript shows repeated Monitor renewals; it does not establish that the old scheduled check is still active. A fallback can be retained when required by an actual gap, with its model-turn cost made explicit.
+
+For a different harness, verify its receiving capability before choosing a scheduler, gateway or vendor integration. Socket Mode is another transport; it is not used by the inspected Python watcher. Adding it would be a separate change, with an app-level token and a receiver that actually forwards events into the intended session.
