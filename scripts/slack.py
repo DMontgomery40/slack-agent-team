@@ -60,18 +60,18 @@ def poll(api, channel, self_id, state, names, now=None):
     seen = set(state.read_text().split()) if state.exists() else set()
     messages = api('conversations.history', channel=channel, limit=30)['messages']
     batch = []
+    retry_after = 0
     for message in messages:
         batch.append(message)
-        if message.get('reply_count') and float(message.get('latest_reply', '0')) > now - 7200:
+        if not retry_after and message.get('reply_count') and float(message.get('latest_reply', '0')) > now - 7200:
             try:
                 replies = api('conversations.replies', channel=channel, ts=message['ts'], limit=50)
                 batch.extend(replies['messages'][1:])
             except (SlackError, OSError, ValueError, KeyError) as exc:
-                if getattr(exc, 'retry_after', 0):
-                    raise
-                code = str(exc) if isinstance(exc, SlackError) else type(exc).__name__
-                warnings.warn('Slack thread read failed: ' + code)
-    retry_after = 0
+                retry_after = getattr(exc, 'retry_after', 0)
+                if not retry_after:
+                    code = str(exc) if isinstance(exc, SlackError) else type(exc).__name__
+                    warnings.warn('Slack thread read failed: ' + code)
     for message in sorted(batch, key=lambda m: float(m['ts'])):
         ts = message['ts']
         if ts in seen:
