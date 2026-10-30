@@ -103,6 +103,32 @@ class HelperTests(unittest.TestCase):
         self.assertIn('ordinary request', out.getvalue())
         self.assertIn('3.0', self.state.read_text().split())
 
+    def test_thread_rate_limit_delivers_fetched_history_before_backoff(self):
+        self.state.write_text('1.0')
+        parents = [
+            {'ts': '2.0', 'user': 'U_SELF', 'reply_count': 1, 'latest_reply': '9999'},
+            {'ts': '3.0', 'user': 'U_OTHER', 'text': 'ordinary request',
+             'reply_count': 1, 'latest_reply': '9998'},
+        ]
+        def api(method, **args):
+            if method == 'conversations.history':
+                return {'messages': parents}
+            if method == 'conversations.replies' and args['ts'] == '2.0':
+                raise self.helper.SlackError('http_429', retry_after=120)
+            self.fail('No further API calls should occur before backoff: ' + method)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            with self.assertRaises(self.helper.SlackError) as raised:
+                self.helper.poll(api, 'C_EXAMPLE', 'U_SELF', self.state, {}, now=10000)
+        self.assertIn('ordinary request', out.getvalue())
+        self.assertEqual(raised.exception.retry_after, 120)
+        self.assertEqual(set(self.state.read_text().split()), {'1.0', '2.0', '3.0'})
+
+        reply = {'ts': '9999', 'thread_ts': '2.0', 'user': 'U_OTHER', 'text': 'delayed reply'}
+        output, _ = self.poll([parents[0]], threads=[parents[0], reply])
+        self.assertIn('delayed reply', output)
+        self.assertEqual(self.poll([parents[0]], threads=[parents[0], reply])[0], '')
+
     def test_name_lookup_rate_limit_delivers_message_then_requests_backoff(self):
         self.state.write_text('1.0')
         def api(method, **args):
