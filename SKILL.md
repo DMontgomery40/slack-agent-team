@@ -19,13 +19,13 @@ If the lead or membership is still unknown after inspection, ask for the missing
 
 ## 2. Connect delivery and delegation
 
-Read [listeners.md](references/listeners.md) before changing message delivery. The observed reference is a Claude Code lead running a Python history watcher through Monitor, with Codex/Muse workers launched directly from task briefs. Preserve an existing working Monitor without adding a recurring model check.
+Read [listeners.md](references/listeners.md) before changing message delivery. Preserve an existing working Monitor without adding a recurring model check.
 
 Reproduce the route actually chosen for each participant. A task worker can receive its brief from the lead without having a Slack listener. Treat mention-triggered workers, vendor-managed bots, other harnesses and push transports as separate routes requiring their own verification. Inspect installed CLI help and local settings before invoking a worker; retain the user's model, tools and permission choices.
 
 ## 3. Start useful work
 
-Have the lead answer people, assign a concrete scope to an available teammate, review the result and integrate it. Use each participant's established Slack identity. The reference team posts short updates top-level in the main channel; follow the destination project's preferences.
+Have the lead answer people, assign a concrete scope to an available teammate, review the result and integrate it. Use each participant's established Slack identity.
 
 Reuse the project's tracker and ownership conventions. Record only what is needed to resume the work: lead, participants, delivery route, relevant paths, current task and how to stop the processes you added. The [team note](assets/TEAM_CONTEXT.template.md) is optional. For personal teams, keep agreed shared personal memory separate from project context; use shared skills the user has selected through each harness's supported mechanism.
 
@@ -33,4 +33,4 @@ Reuse the project's tracker and ownership conventions. Record only what is neede
 
 Check an untagged human message reaching the lead, a real delegated task reaching its worker, and the result returning through the expected identity. Read existing evidence first; use a live test within the user's authorized scope. Record what was observed and what remains untested. Fetch full messages when the watcher preview is insufficient.
 
-Document watcher expiry, renewal, missed-history recovery and process ownership. The [evidence record](references/betkalshi-evidence.md) distinguishes the current implementation from historical fallbacks. For an employer deployment or API proxy migration, use [workplace-handoff.md](references/workplace-handoff.md); it describes pending decisions, not implemented enterprise support.
+Document watcher expiry, renewal, missed-history recovery and process ownership.

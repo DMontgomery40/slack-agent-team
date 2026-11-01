@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""Portable version of BetKalshi's history watcher and top-level post helper.
-
-Uses only Slack Web API calls. It neither starts nor invokes a model.
+"""Uses only Slack Web API calls. It neither starts nor invokes a model.
 """
 import argparse
 import json

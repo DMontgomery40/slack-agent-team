@@ -1,22 +1,10 @@
 # Receiving Slack messages
 
-The observed BetKalshi route is:
-
-```text
-Slack Web API → Python watcher → Claude Code Monitor → existing lead session
-                                                      ↓
-                                            CLI task + written brief
-                                                      ↓
-                                                Codex / Muse
-                                                      ↓
-                                     files + Slack post using worker token
-```
-
 Slack API polling and model polling have different costs. The Python watcher checks history every 20 seconds, prints only new relevant output, and makes no model calls. Monitor feeds that output into Claude. An empty check does not start a model turn. New-message events and Monitor expiry/renewal still consume attention; a busy channel is not free.
 
-## Claude lead: the observed route
+## Claude lead
 
-Use the existing watcher if it works. The live source and limits are recorded in [betkalshi-evidence.md](betkalshi-evidence.md). The portable [helper](../scripts/slack.py) has the same basic delivery behavior with environment-based configuration.
+Use the existing watcher if it works. The portable [helper](../scripts/slack.py) has the same basic delivery behavior with environment-based configuration.
 
 The setup agent supplies `SLACK_BOT_TOKEN` and `SLACK_CHANNEL_ID` through the existing local secret mechanism, and creates a private writable state directory. Keep one watcher and one state file for this lead/channel. Test identity with:
 
