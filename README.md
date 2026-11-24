@@ -14,15 +14,28 @@ Claude Code leads, Codex and Muse Code pick up the work, and you talk to all of 
 - Each agent keeps one session per room (`claude -p --resume`, `codex exec resume`), so a turn only carries what is new since its last one. If a resume fails, the run starts a fresh session with recent history.
 - A loop guard pauses after six handoffs in a row (you can change the number), with a Continue button.
 - Menu bar item, notifications and a Dock badge when someone posts while the window is in the background.
-- Team settings hold the command line for each teammate. Anything with a headless mode can join; plain-text output works for any CLI.
+- Settings (Cmd+, or the Settings menu in the menu bar) holds teammates, providers, rooms and routing. Any CLI with a headless mode can join; plain-text output works for all of them.
 
-What it does not do: runs are headless, so an agent can't stop and ask you to approve something. Each CLI uses the permissions in its own config (`~/.claude/settings.json`, `~/.codex/config.toml` and so on). Add flags in Team settings to give a teammate more room, for example `--sandbox workspace-write` for Codex, which is read-only by default. The app has to be open for anything to happen: closing the window ends its runs. Muse's default (`muse exec --prompt-file`) follows the command observed in the original setup and is untested here.
+### Providers
+
+Each teammate picks where its model calls go and who pays:
+
+- **Subscriptions**: each CLI uses the plan you signed in with (Claude Pro or Max, a ChatGPT plan, your Google or Meta account). API keys in your shell are hidden from the run, so they can't quietly switch you to per-token billing.
+- **As configured**: nothing is touched; your shell and each CLI's own config decide.
+- **Vertex AI / Model Garden**: a project and region, signed in once with `gcloud auth application-default login`. Claude Code gets `CLAUDE_CODE_USE_VERTEX`, Gemini CLI gets `GOOGLE_GENAI_USE_VERTEXAI`, and Codex reaches OpenAI models on Vertex through the Responses API (preview). For open models in Model Garden, put Codex behind LiteLLM.
+- **LiteLLM**: one proxy URL and key for the whole team. Claude Code talks to its Anthropic endpoint (`ANTHROPIC_BASE_URL` and `ANTHROPIC_AUTH_TOKEN`), Codex gets a `model_providers` entry passed with `-c` that points at `/v1/responses`, and Gemini CLI uses `GOOGLE_GEMINI_BASE_URL`. Model names are the `model_name` entries in your LiteLLM config, and Test connection lists them.
+- **Anthropic or OpenAI API keys, any other gateway, or a custom environment** for everything else (Bedrock, OpenRouter, a Gemini API key, Muse with `META_API_KEY`).
+
+Keys come from a variable in your login shell, from a command (`op read ...`, `security find-generic-password -w ...`), or are saved in `~/.agent-team/secrets.json` with mode 600. They never go into `team.json` or the run logs, and nothing is written to `~/.claude/settings.json` or `~/.codex/config.toml`: every setting is applied to that one run only. Switching a teammate's provider or model starts it on a fresh session.
+
+What it does not do: runs are headless, so an agent can't stop and ask you to approve something. Each CLI uses the permissions in its own config (`~/.claude/settings.json`, `~/.codex/config.toml` and so on). Add flags in Settings to give a teammate more room, for example `--sandbox workspace-write` for Codex, which is read-only by default. The app has to be open for anything to happen: closing the window ends its runs. The Muse (`muse exec --prompt-file`) and Gemini CLI (`--output-format json`) defaults follow their docs but haven't been run here yet.
 
 The @mention wake-up and loop guard follow [agentchattr](https://github.com/bcurts/agentchattr), which does the same thing for interactive sessions with a local server and tmux. This app uses each CLI's own headless mode instead, so there is no server to run.
 
 ```text
 ~/.agent-team/
-  team.json            teammates, rooms, routing settings
+  team.json            teammates, providers, rooms, routing settings
+  secrets.json         keys you chose to save here (mode 600)
   state.json           session ids and what each agent has already seen
   rooms/<room>.jsonl   one message per line: {id, ts, from, kind, text, hop}
   runs/<id>/           prompt.md, events.jsonl, run.json, stderr.txt
@@ -39,7 +52,7 @@ python3 scripts/team.py post --as claude < reply.md
 python3 -u scripts/team.py watch --state /private-state/lead-seen.txt --self claude
 ```
 
-The app routes anything appended this way. An interactive Claude Code session can still be the lead: set the lead to "Its own session" in Team and point its Monitor at `team.py watch` instead of the Slack watcher. Monitor's 30-minute limit and the renewal steps in [listeners.md](references/listeners.md) still apply to that route.
+The app routes anything appended this way. An interactive Claude Code session can still be the lead: set the lead to "Its own session" in Settings and point its Monitor at `team.py watch` instead of the Slack watcher. Monitor's 30-minute limit and the renewal steps in [listeners.md](references/listeners.md) still apply to that route.
 
 ## Slack route
 
