@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Team</title>
+<script type="application/json" id="claude-artifacts-manifest">{"permissions": ["full-access", "notifications", "menu-bar"]}</script>
+<script type="importmap">{"imports": {"three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a team chat you already know how to use, built from Mac parts. Quiet chrome, the bots do the talking.
+   IDEA: a chat workspace with an office next door. Channels on the left, conversation in the middle, the Office Bot floor on the side.
+   PICTURE: the bots' own little characters, the same ones that sit at desks in the office, talking in a group chat that folds into one summary.
+   COLOUR and TYPE: system greys and system blue, translucent sidebar, white panels; the system font (SF on a Mac, Inter elsewhere).
+   LAYOUT: title bar with search, workspace rail, sidebar, messages, a resizable office pane; settings as a System Settings style sheet. */
+:root{color-scheme:light dark;
+--frame:light-dark(#e8e8ed,#262629);--panel:light-dark(#ffffff,#1e1e20);--panel2:light-dark(#f5f5f7,#232326);
+--t1:light-dark(#1d1d1f,#f5f5f7);--t2:light-dark(#6e6e73,#a1a1a6);--t3:light-dark(#a1a1a6,#6e6e73);
+--sep:light-dark(rgba(60,60,67,.13),rgba(235,235,245,.12));--sep2:light-dark(rgba(60,60,67,.22),rgba(235,235,245,.2));
+--fill:light-dark(rgba(120,120,128,.12),rgba(120,120,128,.24));--fill2:light-dark(rgba(120,120,128,.07),rgba(120,120,128,.16));
+--accent:light-dark(#007aff,#0a84ff);--green:light-dark(#34c759,#30d158);--orange:light-dark(#ff9500,#ff9f0a);--red:light-dark(#ff3b30,#ff453a);
+--bubble:light-dark(#e9e9eb,#2c2c2e);--hover:light-dark(rgba(0,0,0,.035),rgba(255,255,255,.04));
+--sh:0 0 0 .5px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05),0 8px 24px -12px rgba(0,0,0,.18);
+--font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,system-ui,sans-serif;--mono:ui-monospace,"SF Mono",Menlo,"JetBrains Mono",monospace}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--frame);color:var(--t1);font:14px/1.45 var(--font);overflow:hidden;-webkit-font-smoothing:antialiased}
+html.vib body{background:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:default}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:1px;border-radius:6px}
+code,pre,.mono{font-family:var(--mono)}
+.ic{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.grow{flex:1}
+.num{font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+
+#app{display:grid;grid-template-columns:70px 252px minmax(0,1fr) auto auto;grid-template-rows:44px minmax(0,1fr);height:100vh}
+#app.office-full{grid-template-columns:70px 252px 0 0 minmax(0,1fr)}
+#app.office-full .room{display:none}
+.wsrail{grid-column:1;grid-row:2}.sidebar{grid-column:2;grid-row:2}.room{grid-column:3;grid-row:2}.divider{grid-column:4;grid-row:2}.pane{grid-column:5;grid-row:2}
+
+/* title bar */
+.topbar{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 12px;-webkit-app-region:drag;app-region:drag;user-select:none}
+.desk.os-darwin .topbar{padding-left:82px}
+.topbar button,.topbar input{-webkit-app-region:no-drag;app-region:no-drag}
+.search{flex:0 1 560px;margin:0 auto;display:flex;align-items:center;gap:7px;height:28px;padding:0 10px;border-radius:7px;background:var(--fill);color:var(--t2)}
+.search input{flex:1;border:0;background:none;outline:none;font-size:13px;color:var(--t1)}
+.search input::placeholder{color:var(--t2)}
+.tbtn{display:flex;align-items:center;gap:6px;height:28px;padding:0 9px;border:0;border-radius:7px;background:none;color:var(--t2);font-size:13px}
+.tbtn:hover{background:var(--fill)}
+.tbtn[aria-pressed=true]{background:var(--fill);color:var(--t1)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--t3)}
+.tbtn.busy .live-dot{background:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 25%,transparent)}
+
+/* workspace rail */
+.wsrail{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0 12px}
+.ws{width:38px;height:38px;border-radius:10px;background:linear-gradient(160deg,#3a3a3c,#1c1c1e);display:grid;place-items:center;margin-bottom:10px;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.12)}
+.ws svg{width:24px;height:24px}
+.rb{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;color:var(--t2);font-size:10.5px;font-weight:500;width:60px;padding:0}
+.rb .tile{width:36px;height:32px;border-radius:9px;display:grid;place-items:center;position:relative}
+.rb .tile .ic{width:19px;height:19px}
+.rb:hover .tile{background:var(--fill)}
+.rb[aria-pressed=true]{color:var(--t1)}.rb[aria-pressed=true] .tile{background:var(--fill)}
+.rb .pip{position:absolute;top:2px;right:2px;min-width:16px;height:16px;border-radius:8px;background:var(--red);color:#fff;font-size:10px;font-weight:600;display:grid;place-items:center;padding:0 4px}
+.me{width:32px;height:32px;border-radius:9px;background:#5e5ce6;color:#fff;font-weight:600;font-size:12px;display:grid;place-items:center;margin-top:8px;position:relative}
+.me::after{content:"";position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px var(--frame)}
+
+/* sidebar */
+.sidebar{display:flex;flex-direction:column;min-height:0;padding:0 8px 0 2px}
+.sb-head{display:flex;align-items:center;gap:6px;height:44px;padding:0 6px 0 10px}
+.ws-name{display:flex;align-items:center;gap:5px;border:0;background:none;font-size:17px;font-weight:700;letter-spacing:-.01em;padding:4px 6px;border-radius:7px;margin-left:-6px;white-space:nowrap}
+.ws-name:hover{background:var(--fill)}
+.ws-name .ic{width:12px;height:12px;color:var(--t2)}
+.icbtn{width:30px;height:30px;border:0;border-radius:8px;background:none;display:grid;place-items:center;color:var(--t2)}
+.icbtn:hover{background:var(--fill);color:var(--t1)}
+.sb-scroll{flex:1;overflow:auto;padding:2px 0 16px;scrollbar-width:thin}
+.statusrow{display:flex;align-items:center;gap:8px;margin:2px 4px 10px;padding:8px 10px;border-radius:10px;background:var(--fill2);font-size:12.5px;color:var(--t2)}
+.statusrow b{color:var(--t1);font-weight:600}
+.sec{margin-bottom:12px}
+.sec-h{display:flex;align-items:center;gap:4px;width:100%;border:0;background:none;color:var(--t2);font-size:12px;font-weight:600;padding:4px 6px;border-radius:6px}
+.sec-h:hover{color:var(--t1)}
+.sec-h .ic{width:11px;height:11px;transition:transform .15s}
+.sec.closed .sec-h .ic{transform:rotate(-90deg)}
+.sec.closed .sec-b{display:none}
+.row{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;text-align:left;padding:0 8px;height:30px;border-radius:7px;font-size:14px;color:var(--t1);white-space:nowrap}
+.row:hover{background:var(--hover)}
+.row[aria-current=true]{background:var(--accent);color:#fff}
+.row[aria-current=true] .hash,.row[aria-current=true] small{color:rgba(255,255,255,.8)}
+.row .hash{width:16px;text-align:center;color:var(--t2);font-weight:500}
+.row .nm{overflow:hidden;text-overflow:ellipsis}
+.row.unread .nm{font-weight:700}
+.row .badge{margin-left:auto;min-width:20px;height:18px;border-radius:9px;background:var(--red);color:#fff;font-size:11px;font-weight:600;display:grid;place-items:center;padding:0 6px}
+.row small{margin-left:auto;color:var(--t3);font-size:11.5px}
+.row.add{color:var(--t2)}
+.row .mini{width:20px;height:20px;border-radius:6px;flex:none;position:relative}
+.row .mini svg{width:20px;height:20px;display:block;border-radius:6px}
+.pres{position:absolute;right:-3px;bottom:-3px;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px var(--frame);background:var(--t3)}
+.pres.working{background:var(--green)}.pres.needs-you{background:var(--orange)}.pres.stuck{background:var(--red)}.pres.finished{background:var(--accent)}
+.row[aria-current=true] .pres{box-shadow:0 0 0 2px var(--accent)}
+.row[data-view][aria-current=true]{background:var(--fill);color:var(--t1)}
+form.nr{display:grid;gap:7px;padding:10px;margin:4px 2px;background:var(--panel);border-radius:10px;box-shadow:var(--sh)}
+.actlist .ai{display:grid;grid-template-columns:28px minmax(0,1fr);gap:9px;width:100%;border:0;background:none;text-align:left;padding:7px 8px;border-radius:8px}
+.actlist .ai:hover{background:var(--hover)}
+.actlist .ai small{color:var(--t2);display:block;font-size:12px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.actlist .ai b{font-size:13px}
+
+/* panels */
+.room,.pane{background:var(--panel);border-radius:12px 0 0 0;box-shadow:var(--sh);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.pane{border-radius:0;box-shadow:none;border-left:.5px solid var(--sep2)}
+#app.office-full .pane{border-radius:12px 0 0 0;box-shadow:var(--sh);border-left:0}
+.divider{width:0;cursor:col-resize;position:relative;z-index:3}
+.divider::after{content:"";position:absolute;inset:0 -4px}
+.chead{height:52px;flex:none;display:flex;align-items:center;gap:10px;padding:0 14px 0 20px;border-bottom:.5px solid var(--sep2)}
+.chead h1{flex:none;margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.chead h1 .hash{color:var(--t2);font-weight:500}
+.chead .topic{font-size:12.5px;color:var(--t2);border:0;background:none;padding:3px 6px;border-radius:6px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono)}
+.chead .topic:hover{background:var(--fill);color:var(--t1)}
+.chead .topic .ic{width:13px;height:13px}
+.stack{display:flex;align-items:center}
+.stack .av{margin-left:-6px;box-shadow:0 0 0 2px var(--panel)}
+.stack .av:first-child{margin-left:0}
+.members{display:flex;align-items:center;gap:7px;border:.5px solid var(--sep2);background:none;border-radius:8px;padding:3px 9px 3px 5px;font-size:13px;color:var(--t2)}
+.members:hover{background:var(--fill2)}
+.btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:7px;border:.5px solid var(--sep2);background:var(--panel);color:var(--t1);font-size:13px;font-weight:500;box-shadow:0 .5px 1px rgba(0,0,0,.06);white-space:nowrap}
+.btn:hover{background:var(--panel2)}
+.btn:active{background:var(--fill)}
+.btn.primary{background:var(--accent);border-color:transparent;color:#fff}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.danger{color:var(--red)}
+.btn[aria-pressed=true]{background:var(--fill);box-shadow:none}
+.btn:disabled{opacity:.45}
+.btn .ic{width:14px;height:14px}
+
+.banner{display:none;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 20px;background:color-mix(in srgb,var(--accent) 10%,var(--panel));border-bottom:.5px solid var(--sep2);font-size:13px}
+.banner.show{display:flex}
+#scroll{flex:1;min-height:0;overflow:auto;padding:10px 0 6px;overscroll-behavior:contain}
+
+/* messages */
+.m{position:relative;display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;padding:6px 20px 6px 20px}
+.m:hover{background:var(--hover)}
+.m.cont{padding-top:1px;padding-bottom:1px}
+.m.cont .av{visibility:hidden;height:0}
+.m.cont .mt{position:absolute;left:20px;width:36px;text-align:right;font-size:10.5px;color:var(--t3);top:5px;visibility:hidden}
+.m.cont:hover .mt{visibility:visible}
+.mh{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;line-height:1.3}
+.mh b{font-size:15px;font-weight:700}
+.mh time,.mh .via{font-size:12px;color:var(--t2)}
+.tag{font-size:10.5px;font-weight:600;color:var(--t2);background:var(--fill);border-radius:4px;padding:1px 5px;line-height:14px}
+.txt{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;line-height:1.47;margin-top:1px}
+.txt code{font-size:12.5px;background:var(--fill);border:.5px solid var(--sep);padding:1px 4px;border-radius:4px;color:light-dark(#c41a16,#ff8a80)}
+.txt pre{white-space:pre;overflow:auto;background:var(--panel2);border:.5px solid var(--sep2);padding:10px 12px;border-radius:8px;font-size:12.5px;line-height:1.5;margin:6px 0}
+.txt pre code{background:none;border:0;padding:0;color:inherit}
+.txt a{color:var(--accent);text-decoration:none}.txt a:hover{text-decoration:underline}
+.at{color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:4px;padding:0 2px;font-weight:500}
+.tools{position:absolute;right:16px;top:-14px;display:none;background:var(--panel);border-radius:9px;box-shadow:var(--sh);padding:2px;z-index:2}
+.m:hover .tools,.bub:hover .tools{display:flex}
+.tools button{height:28px;min-width:30px;padding:0 7px;border:0;background:none;border-radius:7px;color:var(--t2);font-size:12.5px;display:flex;align-items:center;gap:4px}
+.tools button:hover{background:var(--fill);color:var(--t1)}
+.day{position:sticky;top:0;z-index:1;display:flex;justify-content:center;margin:10px 0 4px;pointer-events:none}
+.day::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:.5px solid var(--sep2)}
+.day span{position:relative;background:var(--panel);border:.5px solid var(--sep2);border-radius:13px;padding:3px 12px;font-size:12.5px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.sys{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;color:var(--t2);font-size:12.5px;padding:6px 20px;text-align:center}
+.lnk{border:0;background:none;padding:0;font-size:12.5px;color:var(--accent)}
+.lnk:hover{text-decoration:underline}
+.sample{font-size:12px;color:var(--t2);text-align:center;margin:2px 0 4px}
+.empty{max-width:480px;margin:12vh auto 0;padding:0 24px;text-align:center;color:var(--t2)}
+.empty .hero{width:76px;height:76px;margin:0 auto 14px;display:block}
+.empty h3{color:var(--t1);font-size:22px;margin:0 0 8px;letter-spacing:-.015em}
+.empty p{margin:0 0 8px;font-size:14px}
+.empty .actions{justify-content:center}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+
+/* avatars */
+.av{width:36px;height:36px;border-radius:9px;flex:none;display:block;overflow:hidden}
+.av svg{width:100%;height:100%;display:block}
+.av.sm{width:24px;height:24px;border-radius:50%}
+.av.xs{width:20px;height:20px;border-radius:50%}
+.av.human{background:#5e5ce6;color:#fff;display:grid;place-items:center;font-weight:600;font-size:13px}
+.av.sm.human{font-size:9.5px}
+
+/* bot conversations */
+.chain{margin:4px 20px 6px 66px;border-radius:14px;background:var(--panel2);border:.5px solid var(--sep);padding:10px 14px 12px}
+.ch-head{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--t2);margin-bottom:8px}
+.ch-head b{color:var(--t1);font-weight:600}
+.bub{position:relative;display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;margin:7px 0}
+.bub .bn{font-size:11.5px;color:var(--t2);margin:0 0 2px 10px}
+.bub .bn b{color:var(--t1);font-weight:600}
+.bubble{display:inline-block;max-width:min(100%,620px);background:var(--bubble);border-radius:18px;padding:7px 12px;font-size:14px;line-height:1.42;white-space:pre-wrap;overflow-wrap:anywhere}
+.bubble .clamp{display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden}
+.bubble code{font-size:12px;background:rgba(0,0,0,.06);padding:0 3px;border-radius:4px}
+.bubble pre{white-space:pre-wrap;font-size:12px;margin:4px 0}
+.bub.typing .bubble{display:inline-flex;align-items:center;gap:10px;padding:9px 13px}
+.dots{display:inline-flex;gap:4px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--t2);opacity:.35;animation:blink 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes blink{40%{opacity:1;transform:translateY(-2px)}}
+.bub .act{font-family:var(--mono);font-size:11.5px;color:var(--t2);max-width:420px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bub .el{font-size:11.5px;color:var(--t3)}
+.bub .tools{top:-10px;right:0}
+.note{font-size:12px;color:var(--t2);margin:6px 0 6px 32px}
+.cap{display:flex;align-items:center;gap:10px;margin:2px 20px 2px 66px;border:.5px solid var(--sep2);background:var(--panel);border-radius:12px;padding:6px 12px 6px 8px;font-size:13px;color:var(--t2);width:max-content;max-width:calc(100% - 86px)}
+.cap:hover{background:var(--panel2)}
+.cap b{color:var(--t1);font-weight:600}
+.cap .ic{width:12px;height:12px;transition:transform .2s}
+.cap[aria-expanded=true] .ic{transform:rotate(90deg)}
+.chain.folded{margin-top:2px}
+.summary-tag{font-size:10.5px;font-weight:600;color:var(--green);background:color-mix(in srgb,var(--green) 13%,transparent);border-radius:4px;padding:1px 5px}
+
+/* composer */
+.composer{padding:4px 20px 16px;position:relative}
+.box{border:.5px solid var(--sep2);border-radius:12px;background:var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.box:focus-within{border-color:color-mix(in srgb,var(--t1) 35%,var(--sep2));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)}
+.fmt{display:flex;gap:2px;padding:5px 6px 0;border-bottom:0}
+.fmt button{width:28px;height:26px;border:0;background:none;border-radius:6px;color:var(--t2);display:grid;place-items:center;font-size:13px}
+.fmt button:hover{background:var(--fill);color:var(--t1)}
+.fmt .ic{width:15px;height:15px}
+.fmt .sp{width:.5px;background:var(--sep2);margin:4px 4px}
+#ta{display:block;width:100%;border:0;background:none;resize:none;outline:none;font-size:15px;line-height:1.45;max-height:260px;padding:6px 14px 2px}
+#ta::placeholder{color:var(--t3)}
+.cbar{display:flex;align-items:center;gap:4px;padding:4px 8px 7px}
+.cbar .chip{display:flex;align-items:center;gap:5px;height:24px;border-radius:12px;border:.5px solid var(--sep2);background:none;padding:0 8px 0 3px;font-size:12px;color:var(--t2)}
+.cbar .chip[aria-pressed=true]{background:color-mix(in srgb,var(--accent) 14%,transparent);border-color:transparent;color:var(--accent)}
+.send{width:30px;height:30px;border-radius:50%;border:0;background:var(--accent);color:#fff;display:grid;place-items:center;margin-left:auto}
+.send:disabled{background:var(--fill);color:var(--t3)}
+.send .ic{width:16px;height:16px;stroke-width:2.2}
+.hint{font-size:11.5px;color:var(--t3);margin:5px 4px 0;text-align:right}
+.pop{position:absolute;bottom:calc(100% - 6px);left:20px;background:var(--panel);border-radius:12px;box-shadow:0 0 0 .5px var(--sep2),0 12px 32px -8px rgba(0,0,0,.3);padding:5px;min-width:270px;display:none;z-index:5}
+.pop.open{display:block}
+.pop button{display:flex;gap:9px;align-items:center;width:100%;border:0;background:none;padding:6px 8px;border-radius:7px;text-align:left}
+.pop button[aria-selected=true]{background:var(--accent);color:#fff}.pop button[aria-selected=true] small{color:rgba(255,255,255,.8)}
+.pop small{color:var(--t2)}
+
+/* side pane */
+.pane-head{height:52px;flex:none;display:flex;align-items:center;gap:8px;padding:0 10px 0 14px;border-bottom:.5px solid var(--sep2)}
+.seg{display:inline-flex;background:var(--fill);border-radius:8px;padding:2px;gap:2px}
+.seg button{border:0;background:none;border-radius:6px;padding:0 12px;height:24px;font-size:12.5px;font-weight:500;color:var(--t1)}
+.seg button[aria-pressed=true]{background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 .5px rgba(0,0,0,.04)}
+:root[data-theme=dark] .seg button[aria-pressed=true]{background:#636366}
+.pane-body{flex:1;min-height:0;position:relative}
+.runsv,.searchv{position:absolute;inset:0;overflow:auto;padding:14px 14px 28px}
+.runs{display:grid;gap:6px}
+.runrow{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:center;border:0;background:var(--panel2);border-radius:10px;padding:8px 10px;text-align:left;font-size:13px}
+.runrow[aria-current=true]{box-shadow:0 0 0 2px var(--accent)}
+.runrow small{color:var(--t2)}
+.pill{font-size:11px;font-weight:600;padding:1px 7px;border-radius:10px;white-space:nowrap;background:var(--fill);color:var(--t2)}
+.pill.running,.pill.working{background:color-mix(in srgb,var(--green) 16%,transparent);color:light-dark(#248a3d,#30d158)}
+.pill.done,.pill.ok{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.pill.failed,.pill.stopped,.pill.no{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.runhead{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;margin-bottom:12px}
+.runhead b{font-size:15px}
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px;font-size:12.5px;margin:6px 0 0}
+.facts dt{color:var(--t2)}.facts dd{margin:0;overflow-wrap:anywhere}
+.ev{display:grid;grid-template-columns:58px 52px minmax(0,1fr);gap:8px;font-size:12px;padding:5px 0;border-bottom:.5px solid var(--sep)}
+.ev time{color:var(--t2);font-variant-numeric:tabular-nums}.ev .k{color:var(--t2);font-weight:500}
+.ev .x{white-space:pre-wrap;overflow-wrap:anywhere;font-family:var(--mono);font-size:11.5px}
+.ev.k-text .x{font-family:var(--font);font-size:13px}
+.ev.k-error .k,.ev.k-stderr .k{color:var(--red)}
+details{margin:8px 0}summary{font-size:13px;font-weight:500}
+details pre{white-space:pre-wrap;font-size:11.5px;background:var(--panel2);padding:10px 12px;border-radius:8px;max-height:320px;overflow:auto}
+.muted{font-size:12.5px;color:var(--t2);line-height:1.5}
+.err{color:var(--red);font-size:12.5px}
+.hit{display:grid;grid-template-columns:24px minmax(0,1fr);gap:9px;width:100%;border:0;background:none;text-align:left;padding:8px;border-radius:9px}
+.hit:hover{background:var(--hover)}
+.hit small{color:var(--t2)}
+.hit mark{background:color-mix(in srgb,var(--orange) 35%,transparent);color:inherit;border-radius:2px}
+
+/* office (Office Bot, after agent-office) */
+.office{position:absolute;inset:0;background:#fff;color:#17171b;font:12px/1.35 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;container-type:size;container-name:office;overflow:hidden}
+.office *{min-width:auto}.office .o-at,.office .o-act span,.office .o-tt small{min-width:0}.office .o-act time{flex:none}
+.office .stage{position:absolute;inset:0}
+.office .stage canvas{display:block}
+.office .card{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:13px;box-shadow:0 1px 2px rgba(0,0,0,.06),0 6px 22px rgba(20,20,30,.08);border:1px solid rgba(0,0,0,.04)}
+.office :where(button){font:inherit;color:inherit;border:0;background:none;padding:0;text-align:left}
+.office b{font-weight:600}
+.office small{color:#8a8a93;font-size:11px}
+.office .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;flex:none}
+.office .oempty{color:#9a9aa3;padding:4px 2px}
+.office .sq{width:22px;height:22px;border-radius:7px;display:inline-grid;place-items:center;flex:none}
+.office .sq i{width:8px;height:8px;border-radius:50%}
+.office .sq.big{width:34px;height:34px;border-radius:10px}
+.o-tl{position:absolute;top:12px;left:12px;display:flex;gap:8px;align-items:flex-start;z-index:5}
+.o-brand{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:7px 12px 7px 8px;max-width:280px}
+.o-logo{width:24px;height:24px;border-radius:7px;background:#0e0e11;position:relative}
+.o-logo::after{content:"";position:absolute;inset:7px;border-radius:3px;background:#fff}
+.o-bt{display:flex;align-items:baseline;gap:8px}
+.o-live{color:#8a8a93;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.o-live i{width:6px;height:6px;border-radius:50%;background:#34c759}
+.o-tour{padding:8px 12px;font-weight:500;display:flex;gap:5px;align-items:center;height:38px}
+.o-tour.on{background:#17171b;color:#fff}
+.o-tc{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:6}
+.o-counts{display:flex;gap:14px;padding:8px 16px;white-space:nowrap;color:#55555d}
+.o-counts span{display:inline-flex;align-items:center}.o-counts b{color:#17171b;margin-right:3px}
+.o-toast{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px}
+.o-tt{display:flex;flex-direction:column;min-width:130px;max-width:260px}
+.o-tt small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.o-btn{background:#f1f1f3;border-radius:8px;padding:5px 11px;font-weight:600}
+.o-btn:hover{background:#e6e6ea}
+.o-panel{position:absolute;z-index:4;display:flex;flex-direction:column;gap:6px}
+.o-left{top:62px;left:12px;width:178px;bottom:200px;overflow:auto;scrollbar-width:none}
+.o-coll{padding:0 12px}
+.o-chead{display:flex;align-items:center;gap:6px;width:100%;padding:10px 0;font-weight:500}
+.o-chead span:first-child{flex:1}
+.o-chead svg{width:9px;height:6px;color:#8a8a93;transition:transform .2s}
+.o-coll.open .o-chead svg{transform:rotate(180deg)}
+.o-badge{background:#f1f1f3;border-radius:9px;padding:0 6px;font-size:10px;color:#6b6b73;line-height:16px}
+.o-badge.hot{background:#fef3c7;color:#b45309}
+.o-cbody{display:none;padding-bottom:8px;max-height:180px;overflow:auto}
+.o-coll.open .o-cbody{display:block}
+.o-arow{display:flex;align-items:center;gap:9px;width:100%;padding:6px 4px;border-radius:9px}
+.o-arow:hover{background:#f4f4f6}
+.o-at{display:flex;flex-direction:column;min-width:0}
+.o-at small{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.o-right{top:12px;right:12px;width:216px;max-height:calc(100% - 290px)}
+.o-floor{overflow:auto;max-height:100%;scrollbar-width:thin}
+.o-ban{background:#3fb35b;color:#fff;padding:12px 14px 10px;display:flex;justify-content:space-between;align-items:flex-start;position:sticky;top:0;z-index:1}
+.o-bname{font-weight:600;font-size:12px}
+.o-bbig{font-size:12px;opacity:.95}.o-bbig b{font-size:26px;margin-right:2px;font-weight:600}
+.o-bsub{font-size:10px;opacity:.85;white-space:nowrap}
+.o-alist{padding:6px 8px 8px}
+.o-activity{position:absolute;left:12px;bottom:12px;width:262px;padding:10px 12px;z-index:4}
+.o-activity h3{margin:0 0 6px;font-size:11px;font-weight:500;color:#8a8a93}
+.o-act{display:flex;gap:8px;padding:2px 0}
+.o-act time{color:#8a8a93;font-variant-numeric:tabular-nums}
+.o-act span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.o-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:14px;padding:7px 14px;background:rgba(255,255,255,.92);border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,.06),0 6px 22px rgba(20,20,30,.08);color:#8a8a93;font-size:10.5px;white-space:nowrap;z-index:3}
+.o-hint kbd{font:inherit;font-weight:600;color:#17171b;margin-right:3px}
+.o-zoom{position:absolute;right:12px;bottom:12px;display:flex;gap:6px;z-index:4}
+.o-zoom button{width:36px;height:36px;display:grid;place-items:center;font-size:18px;text-align:center}
+.o-mnav{display:none}
+.office .ab{position:relative;width:24px;height:24px;pointer-events:auto;cursor:pointer}
+.office .ab-ic{width:24px;height:24px;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.2);border:2px solid #fff;display:grid;place-items:center}
+.office .ab-ic svg{width:16px;height:16px}
+.office .ab.s-idle .ab-ic{width:9px;height:9px;margin:7.5px;border:0;box-shadow:none;opacity:.55}
+.office .ab-pill{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#fff;border-radius:12px;padding:5px 12px;font-size:13px;font-weight:500;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 10px rgba(0,0,0,.14)}
+.office .ab::before{content:"";position:absolute;left:50%;bottom:100%;width:1px;height:var(--lead,0px);background:rgba(0,0,0,.25)}
+.office .ab.s-working .ab-ic{animation:abp 1.6s ease-in-out infinite}
+@keyframes abp{50%{transform:scale(1.1)}}
+.o-detback{position:absolute;inset:0;z-index:8;background:rgba(255,255,255,.2)}
+.o-detail{position:absolute;z-index:9;left:50%;bottom:62px;transform:translateX(-50%);width:min(340px,calc(100% - 24px));padding:16px}
+.o-dh{display:flex;gap:10px;align-items:center;margin-bottom:10px}.o-dh b{font-size:15px;display:block}
+.o-chip{display:inline-block;color:#fff;border-radius:8px;padding:1px 8px;font-size:10.5px;font-weight:600;margin-top:2px}
+.o-detail dl{display:grid;grid-template-columns:62px 1fr;gap:6px 8px;margin:0}.o-detail dt{color:#8a8a93}.o-detail dd{margin:0;word-break:break-word}
+.o-x{position:absolute;top:8px;right:10px;font-size:20px;color:#8a8a93;line-height:1}
+.o-fallback{position:absolute;inset:0;display:grid;place-items:center;z-index:6;pointer-events:none}
+.o-fallback .card{padding:18px 22px;max-width:360px;text-align:center;background:#fff}
+.o-fallback h2{margin:0 0 6px;font-size:15px}.o-fallback p{margin:0;color:#55555d}
+.o-dactions{display:flex;gap:6px;margin-top:12px}
+@container office (max-width:767px){
+  .o-hint,.o-zoom{display:none}
+  .office .ab.s-working .ab-pill,.office .ab.s-finished .ab-pill{display:none!important}
+  .office .ab-pill{font-size:11px;padding:4px 9px;max-width:160px}
+  .o-brand{max-width:calc(100cqw - 100px)}.o-bt{flex-direction:column;gap:0}
+  .o-tc{top:62px;max-width:calc(100cqw - 16px)}
+  .o-counts{gap:9px;padding:7px 10px;font-size:11px}
+  .o-mnav{display:flex;gap:6px;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);z-index:12}
+  .o-mnav button{padding:9px 14px;font-weight:500;text-align:center}
+  .o-left,.o-right,.o-activity{z-index:10;transition:transform .25s ease;max-height:none}
+  .o-left{top:56px;bottom:64px;left:8px;width:min(84cqw,300px);transform:translateX(-110%)}
+  .o-right{top:56px;bottom:64px;right:8px;width:min(84cqw,300px);transform:translateX(110%)}
+  .o-activity{left:8px;right:8px;bottom:64px;width:auto;transform:translateY(160%)}
+  .office.has-toast .o-left,.office.has-toast .o-right{top:166px}
+  .o-left:not(.open-d),.o-right:not(.open-d),.o-activity:not(.open-d){visibility:hidden}
+  .open-d{transform:none!important}
+  .office .card{backdrop-filter:none;background:#fff}
+  .o-detail{bottom:64px}
+}
+
+/* settings: System Settings style */
+.sheet{position:fixed;inset:0;z-index:20;display:none;place-items:center;background:rgba(0,0,0,.22);padding:24px}
+.sheet.open{display:grid}
+.sbox{width:min(980px,100%);height:min(720px,100%);background:var(--panel);border-radius:14px;box-shadow:0 0 0 .5px rgba(0,0,0,.2),0 30px 80px -20px rgba(0,0,0,.45);display:grid;grid-template-columns:220px minmax(0,1fr);overflow:hidden}
+.snav{background:var(--frame);padding:14px 10px;display:flex;flex-direction:column;gap:2px;border-right:.5px solid var(--sep2)}
+.snav .ssearch{display:flex;align-items:center;gap:6px;height:28px;border-radius:7px;background:var(--fill);padding:0 8px;color:var(--t2);font-size:13px;margin-bottom:10px}
+.snav button{display:flex;align-items:center;gap:9px;border:0;background:none;text-align:left;padding:0 8px;height:32px;border-radius:7px;font-size:13.5px}
+.snav button[aria-current=true]{background:var(--accent);color:#fff}
+.snav button small{margin-left:auto;font-size:11.5px;color:var(--t2)}
+.snav button[aria-current=true] small{color:rgba(255,255,255,.8)}
+.sico{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:#fff;flex:none}
+.sico .ic{width:14px;height:14px;stroke-width:2}
+.spane{display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-height:0}
+.stitle{height:52px;display:flex;align-items:center;gap:8px;padding:0 20px;border-bottom:.5px solid var(--sep)}
+.stitle h2{font-size:15px;margin:0;font-weight:600}
+.back{display:flex;align-items:center;gap:2px;border:0;background:none;color:var(--accent);font-size:13.5px;padding:4px 6px 4px 2px;border-radius:6px}
+.back:hover{background:var(--fill2)}
+.sbody{overflow:auto;padding:18px 28px 30px;background:var(--panel2)}
+.sbody .lead{font-size:13px;color:var(--t2);margin:0 2px 16px;max-width:64ch}
+.gh{font-size:12px;font-weight:600;color:var(--t2);margin:18px 12px 6px}
+.group{background:var(--panel);border-radius:10px;box-shadow:0 0 0 .5px var(--sep2);overflow:hidden}
+.gr{display:flex;align-items:center;gap:12px;min-height:44px;padding:7px 14px;position:relative}
+.gr+.gr::before{content:"";position:absolute;top:0;left:14px;right:0;border-top:.5px solid var(--sep)}
+.gr.link{width:100%;border:0;background:none;text-align:left}
+.gr.link:hover{background:var(--hover)}
+.gl{flex:1;font-size:13.5px;display:flex;flex-direction:column;gap:1px}
+.gl small{font-size:12px;color:var(--t2)}
+.gc{flex:0 1 55%;display:flex;justify-content:flex-end;align-items:center;gap:8px}
+.gc.wide{flex:1}
+.gf{font-size:12px;color:var(--t2);margin:6px 12px 0;line-height:1.45}
+.chev{width:12px;height:12px;color:var(--t3);stroke-width:2}
+.field{width:100%;height:28px;border:.5px solid var(--sep2);background:var(--panel);border-radius:6px;padding:0 9px;font-size:13px;color:var(--t1);box-shadow:inset 0 .5px 1px rgba(0,0,0,.04)}
+.field:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.field.mono{font-family:var(--mono);font-size:12.5px}
+textarea.field{height:auto;min-height:84px;padding:7px 9px;font-family:var(--mono);font-size:12.5px;line-height:1.45;resize:vertical}
+select.field{appearance:none;-webkit-appearance:none;padding-right:26px;background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 14'%3E%3Cpath d='M2 5l3-3 3 3M2 9l3 3 3-3' fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 8px center/9px 13px;width:auto;min-width:160px;max-width:100%}
+.sw{position:relative;display:inline-block;width:38px;height:22px;flex:none}
+.sw input{position:absolute;opacity:0;inset:0;margin:0;cursor:default}
+.sw span{position:absolute;inset:0;border-radius:11px;background:var(--fill);transition:background .2s;pointer-events:none}
+.sw span::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25),0 0 0 .5px rgba(0,0,0,.04);transition:transform .2s}
+.sw input:checked+span{background:var(--green)}
+.sw input:checked+span::after{transform:translateX(16px)}
+.sw input:focus-visible+span{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent)}
+.ahead{display:flex;align-items:center;gap:14px;margin:4px 2px 18px}
+.ahead .av{width:56px;height:56px;border-radius:14px}
+.ahead h3{margin:0;font-size:20px;letter-spacing:-.01em}
+.ahead p{margin:2px 0 0;color:var(--t2);font-size:13px}
+.route{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--t2);margin-top:2px}
+.route i{width:6px;height:6px;border-radius:50%;background:var(--c);display:inline-block;margin-right:4px}
+.route .arr{color:var(--t3)}
+.route .m2{font-family:var(--mono)}
+.wire{font-size:13px;line-height:1.45;padding:10px 14px;border-radius:10px;background:color-mix(in srgb,var(--green) 11%,var(--panel));box-shadow:0 0 0 .5px color-mix(in srgb,var(--green) 35%,transparent)}
+.wire.no{background:color-mix(in srgb,var(--orange) 12%,var(--panel));box-shadow:0 0 0 .5px color-mix(in srgb,var(--orange) 40%,transparent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px}
+.chips button{border:.5px solid var(--sep2);background:var(--panel2);border-radius:6px;padding:2px 8px;font:12px var(--mono)}
+.kind{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:700;letter-spacing:.02em;flex:none}
+.sfoot{display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:.5px solid var(--sep);background:var(--panel)}
+
+.gate{position:fixed;inset:0;display:none;place-items:center;background:var(--frame);z-index:30;padding:24px}
+.gate.open{display:grid}
+.gate>div{max-width:440px;background:var(--panel);border-radius:16px;box-shadow:var(--sh);padding:30px 30px 26px;text-align:center}
+.gate .hero{width:84px;height:84px;margin:0 auto 14px;display:block}
+.gate h3{margin:0 0 8px;font-size:21px;letter-spacing:-.01em}
+.gate p{margin:0 0 10px;color:var(--t2);font-size:13.5px}
+.gate .actions{justify-content:center}
+.booting #app{visibility:hidden}
+
+@media (prefers-reduced-motion:reduce){.dots i,.office .ab.s-working .ab-ic{animation:none}}
+@media(max-width:1100px){#app{grid-template-columns:62px 220px minmax(0,1fr) auto auto}.rb{width:54px}}
+@media(max-width:1300px){
+  #app:not(.office-full) .pane{position:fixed;right:0;top:44px;bottom:0;width:min(460px,100vw)!important;z-index:9;box-shadow:-20px 0 40px -20px rgba(0,0,0,.35)}
+  .divider{display:none}}
+@media(max-width:760px){#app,#app.office-full{grid-template-columns:minmax(0,1fr);grid-template-rows:44px minmax(0,1fr)}
+  .room,.pane{grid-column:1}
+  .wsrail,.sidebar{display:none}.room{border-radius:0}.search{display:none}
+  .chain,.cap{margin-left:20px}.cap{max-width:calc(100% - 40px)}
+  .sbox{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}.snav{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:.5px solid var(--sep2)}.snav .ssearch{display:none}.snav button{flex:none}
+  .sheet{padding:0}.sbox{height:100%;border-radius:0}.sbody{padding:14px}.gc{flex-basis:60%}}
+</style>
+</head>
+<body class="booting">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 20 20"><path d="M3.5 9 10 3.5 16.5 9v7a1 1 0 0 1-1 1h-3.5v-5h-4v5H4.5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 20 20"><path d="M5 13.5V9a5 5 0 0 1 10 0v4.5l1.5 1.5h-13zM8.3 17a1.8 1.8 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-office" viewBox="0 0 20 20"><path d="M10 2.8 17 6.6v6.8L10 17.2 3 13.4V6.6zM3 6.6l7 3.8 7-3.8M10 10.4v6.8"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M4.7 15.3l1.4-1.4M13.9 6.1l1.4-1.4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.4 10.4 14 14"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5"/></symbol>
+  <symbol id="i-down" viewBox="0 0 12 12"><path d="M2.5 4.5 6 8l3.5-3.5"/></symbol>
+  <symbol id="i-left" viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></symbol>
+  <symbol id="i-compose" viewBox="0 0 20 20"><path d="M13.5 3.5l3 3L8 15H5v-3zM11.5 5.5l3 3"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 16 16"><path d="M5.5 3.5v9M10.5 3.5v9"/></symbol>
+  <symbol id="i-play" viewBox="0 0 16 16"><path d="M5 3.2v9.6L12.5 8z"/></symbol>
+  <symbol id="i-list" viewBox="0 0 16 16"><path d="M5.5 4h8M5.5 8h8M5.5 12h8M2.5 4h.01M2.5 8h.01M2.5 12h.01"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 16 16"><path d="M2 4.5a1 1 0 0 1 1-1h3l1.4 1.5H13a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-up" viewBox="0 0 16 16"><path d="M8 13V3.5M3.8 7.5 8 3.3l4.2 4.2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 16 16"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5 9 7M2.5 13.5 7 9"/></symbol>
+  <symbol id="i-reply" viewBox="0 0 16 16"><path d="M6.5 4 2.5 8l4 4M2.5 8h7a4 4 0 0 1 4 4"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 3.5v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h.5"/></symbol>
+  <symbol id="i-at" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.7"/><path d="M10.7 5.5v3.6a1.6 1.6 0 0 0 3.2 0V8a5.9 5.9 0 1 0-2.4 4.8"/></symbol>
+  <symbol id="i-bold" viewBox="0 0 16 16"><path d="M4.5 3h4.2a2.5 2.5 0 0 1 0 5H4.5zM4.5 8h5a2.5 2.5 0 0 1 0 5h-5z" stroke-width="1.9"/></symbol>
+  <symbol id="i-ital" viewBox="0 0 16 16"><path d="M7 3h5M4 13h5M9.5 3l-3 10"/></symbol>
+  <symbol id="i-code" viewBox="0 0 16 16"><path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/></symbol>
+  <symbol id="i-block" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="M5.5 6.5 4 8l1.5 1.5M10.5 6.5 12 8l-1.5 1.5"/></symbol>
+  <symbol id="i-person" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13.5a5 5 0 0 1 10 0"/></symbol>
+  <symbol id="i-net" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11M8 2.5c2 2.2 2 8.8 0 11M8 2.5c-2 2.2-2 8.8 0 11"/></symbol>
+  <symbol id="i-hash" viewBox="0 0 16 16"><path d="M6 2.5 5 13.5M11 2.5l-1 11M2.5 6h11M2 10h11"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 16 16"><path d="M2.5 4.5h6M11.5 4.5h2M2.5 11.5h2M7.5 11.5h6"/><circle cx="10" cy="4.5" r="1.6"/><circle cx="6" cy="11.5" r="1.6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 16 16"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5a1 1 0 0 0 1 1h3.8a1 1 0 0 0 1-1l.6-8.5"/></symbol>
+</svg>
+<div id="app">
+  <div class="topbar">
+    <div class="search"><svg class="ic"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search Agent Team" aria-label="Search messages" autocomplete="off"></div>
+    <button class="tbtn" id="runsbtn" title="Runs"><span class="live-dot"></span><span id="runslabel">All quiet</span></button>
+    <button class="tbtn" id="officebtn" aria-pressed="false" title="Show the office"><svg class="ic"><use href="#i-office"/></svg>Office</button>
+  </div>
+  <nav class="wsrail" aria-label="Workspace">
+    <div class="ws" title="Agent Team" id="wslogo"><span style="width:12px;height:12px;border-radius:3px;background:#fff"></span></div>
+    <button class="rb" data-view="home" aria-pressed="true"><span class="tile"><svg class="ic"><use href="#i-home"/></svg></span>Home</button>
+    <button class="rb" data-view="activity" aria-pressed="false"><span class="tile"><svg class="ic"><use href="#i-bell"/></svg><span class="pip" id="actpip" hidden></span></span>Activity</button>
+    <button class="rb" data-view="office" aria-pressed="false"><span class="tile"><svg class="ic"><use href="#i-office"/></svg></span>Office</button>
+    <span class="grow"></span>
+    <button class="rb" id="setbtn" title="Settings"><span class="tile"><svg class="ic"><use href="#i-gear"/></svg></span>Settings</button>
+    <div class="me" id="me" title="You">You</div>
+  </nav>
+  <aside class="sidebar">
+    <div class="sb-head"><button class="ws-name" id="wsname">Agent Team <svg class="ic"><use href="#i-down"/></svg></button><span class="grow"></span><button class="icbtn" id="newroom" title="New channel"><svg class="ic"><use href="#i-compose"/></svg></button></div>
+    <div class="sb-scroll" id="sbscroll"></div>
+  </aside>
+  <main class="room">
+    <header class="chead">
+      <h1 id="roomname"><span class="hash">#</span>general</h1>
+      <button class="topic" id="folder" title="Open this room's folder"><svg class="ic"><use href="#i-folder"/></svg><span>~</span></button>
+      <span class="grow"></span>
+      <button class="members" id="members" title="Teammates"></button>
+      <button class="btn" id="pause" aria-pressed="false"><svg class="ic"><use href="#i-pause"/></svg><span>Pause</span></button>
+    </header>
+    <div class="banner" id="banner"></div>
+    <div id="scroll"><div class="feed" id="feed"></div><div class="lives" id="lives"></div></div>
+    <div class="composer">
+      <div class="pop" id="pop" role="listbox"></div>
+      <form class="box" id="form">
+        <div class="fmt"><button type="button" data-fmt="b" title="Bold"><svg class="ic"><use href="#i-bold"/></svg></button><button type="button" data-fmt="i" title="Italic"><svg class="ic"><use href="#i-ital"/></svg></button><span class="sp"></span><button type="button" data-fmt="c" title="Code"><svg class="ic"><use href="#i-code"/></svg></button><button type="button" data-fmt="cb" title="Code block"><svg class="ic"><use href="#i-block"/></svg></button></div>
+        <textarea id="ta" rows="1" placeholder="Message #general" aria-label="Message"></textarea>
+        <div class="cbar" id="cbar"><button type="button" class="icbtn" data-fmt="at" title="Mention a teammate" style="width:26px;height:26px"><svg class="ic"><use href="#i-at"/></svg></button><span id="to" style="display:flex;gap:4px;flex-wrap:wrap"></span><button class="send" id="send" type="submit" title="Send"><svg class="ic"><use href="#i-up"/></svg></button></div>
+      </form>
+      <div class="hint" id="hint">Return to send, Shift+Return for a new line</div>
+    </div>
+  </main>
+  <div class="divider" id="divider" title="Drag to resize"></div>
+  <aside class="pane" id="pane" hidden>
+    <div class="pane-head"><div class="seg" id="paneseg"><button data-pane="office" aria-pressed="true">Office</button><button data-pane="runs" aria-pressed="false">Runs</button><button data-pane="search" aria-pressed="false" hidden>Search</button></div><span class="grow"></span><button class="icbtn" id="paneexpand" title="Expand the office"><svg class="ic"><use href="#i-expand"/></svg></button><button class="icbtn" id="paneclose" title="Close"><svg class="ic"><use href="#i-x"/></svg></button></div>
+    <div class="pane-body">
+      <div class="office" id="office">
+        <div class="stage" id="o-stage"></div>
+        <div class="o-fallback" id="o-fallback" hidden><div class="card"><h2>3D view unavailable</h2><p>The office couldn't start (WebGL or the three.js CDN is unavailable). The panels still work.</p></div></div>
+        <div class="o-tl"><div class="card o-brand"><div class="o-logo"></div><div class="o-bt"><b>Office Bot</b><span class="o-live"><i></i><em style="font-style:normal">Live</em> · <span id="o-updated">--:--</span></span></div></div><button class="card o-tour" id="o-tour" aria-pressed="false"><span id="o-tourIcon">▶</span> Tour</button></div>
+        <div class="o-tc"><div class="card o-counts" id="o-counts"></div><div class="card o-toast" id="o-toast" hidden></div></div>
+        <aside class="o-panel o-left" id="o-left">
+          <section class="card o-coll open" id="o-cWait"><button class="o-chead"><span>Waiting on me</span><span class="o-badge" id="o-waitBadge">0</span><svg viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="o-cbody" id="o-waitBody"></div></section>
+          <section class="card o-coll" id="o-cFin"><button class="o-chead"><span>Finished</span><span class="o-badge" id="o-finBadge">0</span><svg viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button><div class="o-cbody" id="o-finBody"></div></section>
+        </aside>
+        <aside class="o-panel o-right" id="o-right"><section class="card o-floor"><div class="o-ban"><div><div class="o-bname">Main</div><div class="o-bbig"><b id="o-bWorking">0</b> working</div></div><div class="o-bsub" id="o-bSub"></div></div><div class="o-alist" id="o-agentList"></div></section></aside>
+        <section class="card o-activity" id="o-activity"><h3>Activity</h3><div id="o-actList"></div></section>
+        <div class="o-hint"><span><kbd>Drag</kbd> rotate</span><span><kbd>Right-drag</kbd> <kbd>WASD</kbd> move</span><span><kbd>Scroll</kbd> zoom</span></div>
+        <div class="o-zoom"><button class="card" id="o-zin" aria-label="Zoom in">+</button><button class="card" id="o-zout" aria-label="Zoom out">−</button></div>
+        <nav class="o-mnav"><button class="card" data-od="o-left">Status</button><button class="card" data-od="o-right">Agents</button><button class="card" data-od="o-activity">Activity</button></nav>
+        <div class="o-detback" id="o-detback" hidden></div>
+        <div class="card o-detail" id="o-detail" hidden></div>
+      </div>
+      <div class="runsv" id="runsv" hidden></div>
+      <div class="searchv" id="searchv" hidden></div>
+    </div>
+  </aside>
+</div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="stitle">
+  <div class="sbox">
+    <nav class="snav" id="snav"></nav>
+    <div class="spane"><div class="stitle" id="stitlebar"></div><div class="sbody" id="sbody"></div>
+      <div class="sfoot"><span class="err" id="serr"></span><span class="grow"></span><button class="btn" id="scancel">Cancel</button><button class="btn primary" id="ssave">Save</button></div></div>
+  </div>
+</div>
+<div class="gate" id="gate"><div id="gatebody"></div></div>
+
+<script>
+{
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const shq = s => "'" + String(s).replace(/'/g, "'\\''") + "'";
+const winq = s => /[\s"&|<>^%()]/.test(s) ? '"' + String(s).replace(/"/g, '""') + '"' : String(s);
+const PALETTE = ['#c2410c', '#16181f', '#6d4aff', '#0e8c7e', '#d6336c', '#1f7a8c', '#8a5a00', '#4b5563'];
+const pad = n => String(n).padStart(2, '0');
+const hm = t => new Date(t).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+const hms = t => { const d = new Date(t); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
+const el = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return Math.floor(s / 60) + ':' + pad(s % 60); };
+const first = (t, n = 140) => { const s = String(t || '').replace(/\s+/g, ' ').trim(); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+const splitArgs = s => { const out = []; let cur = '', q = null, any = false; for (const ch of String(s)) { if (q) { if (ch === q) q = null; else cur += ch; } else if (ch === '"' || ch === "'") { q = ch; any = true; } else if (/\s/.test(ch)) { if (cur || any) out.push(cur); cur = ''; any = false; } else cur += ch; } if (cur || any) out.push(cur); return out; };
+const joinArgs = a => (a || []).map(x => /[\s"']/.test(x) || x === '' ? "'" + x.replace(/'/g, '"') + "'" : x).join(' ');
+const clone = v => JSON.parse(JSON.stringify(v));
+const KEY = '\u0000KEY\u0000';
+
+/* ---------- catalog: CLIs and providers ---------- */
+const CLIS = {
+  claude: {label: 'Claude Code', preset: {handle: 'claude', name: 'Claude Code', program: 'claude', format: 'claude', stdin: true, modelFlag: '--model',
+    args: ['-p', '--output-format', 'stream-json', '--verbose'], resumeArgs: ['-p', '--resume', '{session}', '--output-format', 'stream-json', '--verbose']},
+    plan: 'Claude Pro or Max', login: 'run `claude` and use /login'},
+  codex: {label: 'Codex', preset: {handle: 'codex', name: 'Codex', program: 'codex', format: 'codex', stdin: true, modelFlag: '-m',
+    args: ['exec', '--json', '-'], resumeArgs: ['exec', '--json', 'resume', '{session}', '-']},
+    plan: 'ChatGPT plan', login: 'run `codex login`'},
+  gemini: {label: 'Gemini CLI', preset: {handle: 'gemini', name: 'Gemini CLI', program: 'gemini', format: 'gemini', stdin: true, modelFlag: '-m',
+    args: ['--output-format', 'json'], resumeArgs: []},
+    plan: 'Google account', login: 'run `gemini` and sign in'},
+  muse: {label: 'Muse Code', preset: {handle: 'muse', name: 'Muse Code', program: 'muse', format: 'text', stdin: false, modelFlag: '',
+    args: ['exec', '--prompt-file', '{prompt_file}'], resumeArgs: []},
+    plan: 'Meta account', login: 'run `muse` and sign in'},
+  custom: {label: 'Other CLI', preset: {handle: 'agent', name: 'New teammate', program: '', format: 'text', stdin: true, modelFlag: '', args: [], resumeArgs: []},
+    plan: 'its own login', login: 'sign in with that CLI'}
+};
+const CREDS = {
+  claude: ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'ANTHROPIC_BASE_URL', 'CLAUDE_CODE_USE_VERTEX', 'CLAUDE_CODE_USE_BEDROCK', 'CLAUDE_CODE_USE_FOUNDRY', 'ANTHROPIC_VERTEX_BASE_URL', 'CLAUDE_CODE_SKIP_VERTEX_AUTH'],
+  codex: ['CODEX_API_KEY', 'OPENAI_API_KEY', 'OPENAI_BASE_URL'],
+  gemini: ['GEMINI_API_KEY', 'GOOGLE_API_KEY', 'GOOGLE_GENAI_USE_VERTEXAI', 'GOOGLE_GEMINI_BASE_URL'],
+  muse: ['META_API_KEY'], custom: []
+};
+const KINDS = {
+  default: {label: 'As configured', tag: 'your shell and each CLI\'s own config', short: 'CFG', color: '#6b7280', builtin: true,
+    about: 'Leaves everything alone: each CLI uses whatever your shell and its own config already say.'},
+  subscription: {label: 'Subscriptions', tag: 'the plans you signed in with', short: 'SUB', color: '#111214', builtin: true,
+    about: 'Each CLI uses the plan you signed in with: Claude Pro or Max, a ChatGPT plan, your Google or Meta account. API keys in your shell are hidden from the run so they can\'t take over and bill per token.'},
+  anthropic: {name: 'Anthropic API', label: 'Anthropic API key', short: 'ANT', color: '#c2410c', key: true, about: 'Claude Code bills per token to an Anthropic Console key.'},
+  openai: {name: 'OpenAI API', label: 'OpenAI API key', short: 'OAI', color: '#0f766e', key: true, about: 'Codex bills per token to an OpenAI Platform key.'},
+  vertex: {name: 'Vertex AI', label: 'Google Vertex AI / Model Garden', short: 'GCP', color: '#2563eb', key: false,
+    about: 'Claude and Gemini models from your Google Cloud project, signed in with gcloud. Codex reaches OpenAI models on Vertex through the Responses API; for open models in Model Garden, put Codex behind LiteLLM.'},
+  litellm: {name: 'LiteLLM', label: 'LiteLLM proxy', short: 'LLM', color: '#7c3aed', key: true,
+    about: 'One LiteLLM proxy for everyone: Claude Code talks to its Anthropic endpoint, Codex to /v1/responses, Gemini CLI to its Gemini route. Model names are the model_name entries in your LiteLLM config.'},
+  gateway: {name: 'Gateway', label: 'Other gateway', short: 'GW', color: '#be185d', key: true, about: 'Any gateway that speaks one of the APIs these CLIs use.'},
+  env: {name: 'Custom env', label: 'Custom environment', short: 'ENV', color: '#4d7c0f', key: true,
+    about: 'Your own environment variables for a run, one KEY=value per line. Write {key} where the key goes. Use it for anything not listed here: Bedrock, OpenRouter, a Gemini API key, Muse with META_API_KEY.'}
+};
+const ADDABLE = ['litellm', 'vertex', 'anthropic', 'openai', 'gateway', 'env'];
+const BUILTIN = [{id: 'default', kind: 'default', name: 'As configured'}, {id: 'subscription', kind: 'subscription', name: 'Subscriptions'}];
+const SUGGEST = {
+  vertex: ['claude-opus-4-8', 'claude-sonnet-5', 'claude-haiku-4-5@20251001', 'gemini-2.5-pro', 'gemini-2.5-flash', 'gpt-6-luna'],
+  anthropic: ['claude-opus-4-8', 'claude-sonnet-5'], openai: ['gpt-6-luna']
+};
+
+const DEFAULT_TEAM = () => ({
+  version: 2, humanName: '', maxHops: 6, maxRuns: 6, reviewByLead: true, notify: true,
+  rooms: [{id: 'general', name: 'general', cwd: '~'}],
+  providers: [],
+  agents: [
+    {...CLIS.claude.preset, kind: 'claude', role: 'lead', mode: 'spawn', enabled: true, provider: 'subscription', model: '', cwd: '', color: '#c2410c'},
+    {...CLIS.codex.preset, kind: 'codex', role: 'worker', mode: 'spawn', enabled: true, provider: 'subscription', model: '', cwd: '', color: '#16181f'},
+    {...CLIS.muse.preset, kind: 'muse', role: 'worker', mode: 'spawn', enabled: true, provider: 'subscription', model: '', cwd: '', color: '#0e8c7e'}
+  ]
+});
+
+const S = {mode: 'boot', D: null, platform: '', home: '', base: '', shell: '/bin/zsh', env: null, team: DEFAULT_TEAM(),
+  rooms: new Map(), room: 'general', routed: new Set(), sessions: {}, lastSeen: {}, runs: new Map(), queues: new Map(),
+  avail: {}, paused: false, drawer: null, logRun: null, toggles: new Set(), teamMtime: 0, humanName: 'You', trayOff: false, newRoom: false,
+  secrets: {}, keyCache: {}, draft: null, draftSecrets: {}, tab: 'teammates', ptest: {}, sheetOpen: false,
+  view: 'home', expanded: new Set(), closedSecs: new Set(), shownChains: new Set(), paneW: 480, pane: undefined, lastPane: 'office', officeFull: false, q: '', detail: null, keepScroll: false};
+
+const agents = () => S.team.agents;
+const agentBy = h => agents().find(a => a.handle === String(h || '').toLowerCase());
+const lead = () => agents().find(a => a.role === 'lead' && a.enabled);
+const providersOf = t => BUILTIN.concat(t.providers || []);
+const providerBy = (id, t = S.team) => providersOf(t).find(p => p.id === id) || BUILTIN[0];
+const cur = () => S.rooms.get(S.room) || [...S.rooms.values()][0];
+const expand = p => { p = String(p || '~').trim() || '~'; if (!S.home) return p; return p === '~' ? S.home : p.startsWith('~/') ? S.home + p.slice(1) : p; };
+const tilde = p => S.home && String(p).startsWith(S.home) ? '~' + String(p).slice(S.home.length) : String(p);
+const roomPath = id => `${S.base}/rooms/${id}.jsonl`;
+const initials = n => { const w = String(n).trim().split(/\s+/); return (w.length > 1 ? w[0][0] + w[1][0] : String(n).slice(0, 2)).toUpperCase(); };
+const slug = (s, n = 32) => String(s).toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, n);
+const rootUrl = u => String(u || '').trim().replace(/\/+$/, '').replace(/\/v1$/, '');
+
+function normalizeTeam(t) {
+  const d = DEFAULT_TEAM();
+  t = (t && typeof t === 'object') ? t : d;
+  t.version = 2;
+  t.maxHops = Math.min(50, Math.max(1, parseInt(t.maxHops, 10) || 6));
+  t.maxRuns = Math.min(16, Math.max(1, parseInt(t.maxRuns, 10) || 6));
+  t.reviewByLead = t.reviewByLead !== false; t.notify = t.notify !== false;
+  t.humanName = typeof t.humanName === 'string' ? t.humanName.slice(0, 40) : '';
+  const pids = new Set(['default', 'subscription']);
+  t.providers = (Array.isArray(t.providers) ? t.providers : []).filter(p => p && ADDABLE.includes(p.kind) && /^[a-z0-9][a-z0-9_-]{0,31}$/.test(p.id || '') && !pids.has(p.id) && pids.add(p.id)).map(p => ({
+    id: p.id, kind: p.kind, name: String(p.name || KINDS[p.kind].name).slice(0, 60),
+    baseUrl: String(p.baseUrl || (p.kind === 'litellm' ? 'http://localhost:4000' : '')).trim(),
+    project: String(p.project || '').trim(), region: String(p.region || 'global').trim(), credentials: String(p.credentials || '').trim(),
+    protocol: ['anthropic', 'openai', 'gemini'].includes(p.protocol) ? p.protocol : 'anthropic', authHeader: p.authHeader === 'x-api-key' ? 'x-api-key' : 'bearer',
+    keySource: ['none', 'env', 'command', 'saved'].includes(p.keySource) ? p.keySource : (KINDS[p.kind].key ? 'env' : 'none'),
+    keyEnv: String(p.keyEnv || '').trim(), keyCmd: String(p.keyCmd || '').trim(), envText: String(p.envText || ''),
+    models: Array.isArray(p.models) ? p.models.map(String).slice(0, 300) : []}));
+  const seen = new Set();
+  t.agents = (Array.isArray(t.agents) ? t.agents : d.agents).filter(a => a && /^[a-z0-9][a-z0-9_-]{0,23}$/.test(String(a.handle || '').toLowerCase())).map((a, i) => {
+    const h = String(a.handle).toLowerCase();
+    if (seen.has(h)) return null; seen.add(h);
+    const kind = CLIS[a.kind] ? a.kind : a.format === 'claude' ? 'claude' : a.format === 'codex' ? 'codex' : a.format === 'gemini' ? 'gemini' : /(^|\/)muse$/.test(a.program || '') ? 'muse' : 'custom';
+    return {handle: h, name: String(a.name || h).slice(0, 40), kind, role: a.role === 'lead' ? 'lead' : 'worker',
+      mode: a.mode === 'external' ? 'external' : 'spawn', enabled: a.enabled !== false,
+      program: String(a.program ?? CLIS[kind].preset.program), args: Array.isArray(a.args) ? a.args.map(String) : [],
+      resumeArgs: Array.isArray(a.resumeArgs) ? a.resumeArgs.map(String) : [], stdin: a.stdin !== false,
+      format: ['claude', 'codex', 'gemini', 'text'].includes(a.format) ? a.format : 'text', cwd: String(a.cwd || ''),
+      provider: pids.has(a.provider) ? a.provider : (a.provider ? 'default' : 'subscription'), model: String(a.model || '').trim(),
+      modelFlag: typeof a.modelFlag === 'string' ? a.modelFlag.trim() : CLIS[kind].preset.modelFlag,
+      color: /^#[0-9a-f]{3,8}$/i.test(a.color || '') ? a.color : PALETTE[i % PALETTE.length]};
+  }).filter(Boolean);
+  let leads = 0; for (const a of t.agents) if (a.role === 'lead' && leads++) a.role = 'worker';
+  t.agents.forEach(a => { a.av = initials(a.name); });
+  const rs = new Set();
+  t.rooms = (Array.isArray(t.rooms) ? t.rooms : d.rooms).filter(r => r && /^[a-z0-9][a-z0-9_-]{0,39}$/.test(r.id || '') && !rs.has(r.id) && rs.add(r.id))
+    .map(r => ({id: r.id, name: String(r.name || r.id).slice(0, 40), cwd: String(r.cwd || '~'), ...(/^[a-z0-9][a-z0-9_-]{0,23}$/.test(r.dm || '') ? {dm: r.dm} : {})}));
+  if (!t.rooms.some(r => !r.dm)) t.rooms.unshift(...d.rooms);
+  return t;
+}
+
+/* ---------- wiring: what a teammate's run needs for its provider ---------- */
+function hasKey(p, secrets = S.secrets, draftSecrets = {}) {
+  if (!KINDS[p.kind]?.key || p.keySource === 'none') return true;
+  if (p.keySource === 'env') return !!p.keyEnv;
+  if (p.keySource === 'command') return !!p.keyCmd;
+  return draftSecrets[p.id] === null ? false : !!(draftSecrets[p.id] || secrets[p.id]);
+}
+function keyWhere(p) {
+  if (!KINDS[p.kind]?.key || p.keySource === 'none') return 'no key';
+  if (p.keySource === 'env') return `key from $${p.keyEnv || '?'}`;
+  if (p.keySource === 'command') return 'key from a command';
+  return 'saved key';
+}
+function plan(a, p, opts = {}) {
+  const k = a.kind, set = {}, unset = [], args = [];
+  const no = why => ({ok: false, why});
+  const model = a.model;
+  const withModel = () => { if (model && a.modelFlag) args.push(a.modelFlag, model); };
+  const noKey = KINDS[p.kind]?.key && !hasKey(p, opts.secrets, opts.draftSecrets);
+  const keyVal = KINDS[p.kind]?.key && p.keySource !== 'none' ? KEY : '';
+  const cli = CLIS[k].label;
+  if (p.kind === 'default') { withModel(); return {ok: true, set, unset, args, summary: `${cli} runs with your shell and its own config, untouched.`}; }
+  if (p.kind === 'subscription') {
+    unset.push(...CREDS[k]); withModel();
+    return {ok: true, set, unset, args, summary: k === 'custom' ? `${cli} uses its own sign-in.` : `${cli} uses your ${CLIS[k].plan}. API keys and gateway variables in your shell are hidden from it. Not signed in? ${CLIS[k].login}.`};
+  }
+  if (noKey) return no(`${p.name} has no key yet. Add one under Providers.`);
+  if (p.kind === 'env') {
+    for (const line of p.envText.split('\n')) { const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=(.*)$/.exec(line); if (m) set[m[1]] = m[2].trim().replaceAll('{key}', keyVal); }
+    withModel();
+    return {ok: true, set, unset, args, summary: `${cli} gets ${Object.keys(set).join(', ') || 'no variables yet'}.`};
+  }
+  if (p.kind === 'anthropic') {
+    if (k !== 'claude') return no(`${cli} can't use an Anthropic key directly. Put the key behind LiteLLM and pick that provider instead.`);
+    unset.push(...CREDS.claude); set.ANTHROPIC_API_KEY = keyVal; withModel();
+    return {ok: true, set, unset, args, summary: `Claude Code bills to your Anthropic key (${keyWhere(p)}).`};
+  }
+  if (p.kind === 'openai') {
+    if (k !== 'codex') return no(`${cli} can't use an OpenAI key directly. Put the key behind LiteLLM and pick that provider instead.`);
+    unset.push(...CREDS.codex); set.CODEX_API_KEY = keyVal; withModel();
+    return {ok: true, set, unset, args, summary: `Codex bills to your OpenAI key (${keyWhere(p)}).`};
+  }
+  if (p.kind === 'vertex') {
+    if (!p.project) return no(`${p.name} needs a Google Cloud project ID.`);
+    const region = p.region || 'global';
+    if (p.credentials) set.GOOGLE_APPLICATION_CREDENTIALS = expand(p.credentials);
+    const auth = p.credentials ? 'service account file' : 'gcloud application default credentials';
+    if (k === 'claude') {
+      unset.push(...CREDS.claude);
+      Object.assign(set, {CLAUDE_CODE_USE_VERTEX: '1', CLOUD_ML_REGION: region, ANTHROPIC_VERTEX_PROJECT_ID: p.project}); withModel();
+      return {ok: true, set, unset, args, summary: `Claude Code calls Claude on Vertex in ${p.project} (${region}) with ${auth}.${model ? '' : ' No model pinned: Claude Code picks its Vertex default.'}`};
+    }
+    if (k === 'gemini') {
+      unset.push(...CREDS.gemini);
+      Object.assign(set, {GOOGLE_GENAI_USE_VERTEXAI: 'true', GOOGLE_CLOUD_PROJECT: p.project, GOOGLE_CLOUD_LOCATION: region}); withModel();
+      return {ok: true, set, unset, args, summary: `Gemini CLI calls Vertex in ${p.project} (${region}) with ${auth}.`};
+    }
+    if (k === 'codex') {
+      if (!model) return no('Codex on Vertex needs a model: an OpenAI model enabled in your Model Garden, such as gpt-6-luna. For Gemini or open models, use LiteLLM.');
+      const host = region === 'global' ? 'https://aiplatform.googleapis.com' : /^(us|eu)$/.test(region) ? `https://aiplatform.${region}.rep.googleapis.com` : `https://${region}-aiplatform.googleapis.com`;
+      unset.push(...CREDS.codex);
+      args.push('-c', 'model_provider="agentteam_vertex"', '-c', 'model_providers.agentteam_vertex.name="Vertex AI"',
+        '-c', `model_providers.agentteam_vertex.base_url="${host}/v1/projects/${p.project}/locations/${region}/publishers/openai/v1"`,
+        '-c', 'model_providers.agentteam_vertex.wire_api="responses"', '-c', 'model_providers.agentteam_vertex.auth.command="gcloud"',
+        '-c', 'model_providers.agentteam_vertex.auth.args=["auth","application-default","print-access-token"]',
+        '-c', 'model_providers.agentteam_vertex.auth.timeout_ms=15000', '-c', 'model_providers.agentteam_vertex.auth.refresh_interval_ms=300000');
+      withModel();
+      return {ok: true, set, unset, args, summary: `Codex calls ${model} on Vertex (Responses API, preview) in ${p.project} (${region}); gcloud supplies the token.`};
+    }
+    return no(`${cli} has no Vertex mode. Use Custom environment if it does.`);
+  }
+  if (p.kind === 'litellm' || p.kind === 'gateway') {
+    const base = p.kind === 'litellm' ? rootUrl(p.baseUrl) : String(p.baseUrl || '').trim().replace(/\/+$/, '');
+    if (!/^https?:\/\//.test(base)) return no(`${p.name} needs a base URL starting with http:// or https://.`);
+    const proto = p.kind === 'litellm' ? {claude: 'anthropic', codex: 'openai', gemini: 'gemini'}[k] : p.protocol;
+    const where = p.kind === 'litellm' ? `LiteLLM at ${base}` : `${p.name} (${base})`;
+    if (!proto || (p.kind === 'gateway' && {claude: 'anthropic', codex: 'openai', gemini: 'gemini'}[k] !== proto))
+      return no(p.kind === 'litellm' ? `${cli} can't talk to LiteLLM directly. Use Custom environment if it has a base URL setting.` : `${p.name} speaks the ${{anthropic: 'Anthropic Messages', openai: 'OpenAI Responses', gemini: 'Gemini'}[p.protocol]} API, which ${cli} doesn't use.`);
+    if (k === 'claude') {
+      unset.push(...CREDS.claude); set.ANTHROPIC_BASE_URL = base;
+      if (keyVal) { if (p.kind === 'gateway' && p.authHeader === 'x-api-key') set.ANTHROPIC_API_KEY = keyVal; else set.ANTHROPIC_AUTH_TOKEN = keyVal; }
+      if (p.kind === 'litellm') set.CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY = '1';
+      withModel();
+      return {ok: true, set, unset, args, summary: `Claude Code sends Anthropic-format requests to ${where}, ${keyWhere(p)}.${model ? '' : ' Pick a model your gateway serves.'}`};
+    }
+    if (k === 'codex') {
+      if (!model) return no(`Codex through ${where} needs a model name the gateway serves.`);
+      unset.push(...CREDS.codex);
+      const url = p.kind === 'litellm' ? base + '/v1' : base;
+      args.push('-c', 'model_provider="agentteam_gw"', '-c', `model_providers.agentteam_gw.name="${p.name.replace(/["\\]/g, '')}"`,
+        '-c', `model_providers.agentteam_gw.base_url="${url}"`, '-c', 'model_providers.agentteam_gw.wire_api="responses"');
+      if (keyVal) { args.push('-c', 'model_providers.agentteam_gw.env_key="AGENT_TEAM_GATEWAY_KEY"'); set.AGENT_TEAM_GATEWAY_KEY = keyVal; }
+      withModel();
+      return {ok: true, set, unset, args, summary: `Codex sends Responses API requests to ${url}, ${keyWhere(p)}.`};
+    }
+    if (k === 'gemini') {
+      unset.push(...CREDS.gemini); set.GOOGLE_GEMINI_BASE_URL = base; set.GEMINI_API_KEY = keyVal || 'none'; withModel();
+      return {ok: true, set, unset, args, summary: `Gemini CLI sends Gemini-format requests to ${where}. Gemini CLI has to be on API-key auth for this (in gemini, /auth); signed in with Google it skips the gateway.`};
+    }
+  }
+  return no(`${cli} can't use ${p.name}.`);
+}
+async function resolveKey(p, draftSecret) {
+  if (!KINDS[p.kind]?.key || p.keySource === 'none') return '';
+  if (p.keySource === 'saved') { const v = draftSecret || S.secrets[p.id]; if (!v) throw new Error(`no key saved for ${p.name}`); return v; }
+  if (p.keySource === 'env') { const v = S.env?.[p.keyEnv]; if (!v) throw new Error(`$${p.keyEnv} is empty in your login shell`); return v; }
+  const c = S.keyCache[p.id];
+  if (c && c.cmd === p.keyCmd && Date.now() - c.t < 300000) return c.v;
+  const r = await S.D.childProcess.exec(p.keyCmd, {timeout: 30000, env: S.env || undefined});
+  const v = (r.stdout || '').trim();
+  if (r.code !== 0 || !v) throw new Error(`the key command for ${p.name} failed${r.stderr ? ': ' + first(r.stderr, 160) : ''}`);
+  S.keyCache[p.id] = {v, t: Date.now(), cmd: p.keyCmd};
+  return v;
+}
+
+/* ---------- avatars: the same little characters that sit in the office ---------- */
+function hashStr(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function mixHex(a, b, t) {
+  const p = h => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+  const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+const SVGS = new Map();
+function botSVG(handle, color) {
+  const key = handle + color; if (SVGS.has(key)) return SVGS.get(key);
+  const k = hashStr(handle) % 5, c = /^#[0-9a-f]{3,8}$/i.test(color) ? color.slice(0, 7) : '#888888';
+  const tint = mixHex(c, '#ffffff', .8), dark = mixHex(c, '#000000', .18);
+  let body, ey = 20;
+  if (k === 0) body = `<circle cx="20" cy="22" r="11.5" fill="${c}"/>`;
+  else if (k === 1) { body = `<rect x="13" y="9.5" width="14" height="25" rx="7" fill="${c}"/>`; ey = 17; }
+  else if (k === 2) { body = `<rect x="10" y="11.5" width="20" height="20" rx="5.5" fill="${c}"/>`; ey = 19; }
+  else if (k === 3) { const pts = []; for (let i = 0; i < 10; i++) { const r = i % 2 ? 6 : 12.5, a = i / 10 * Math.PI * 2 - Math.PI / 2; pts.push((20 + Math.cos(a) * r).toFixed(1) + ',' + (22 + Math.sin(a) * r).toFixed(1)); } body = `<polygon points="${pts.join(' ')}" fill="${c}" stroke="${c}" stroke-width="2.5" stroke-linejoin="round"/>`; ey = 21; }
+  else { body = `<path d="M20 9.5c4.5 0 8.6 6.6 9.6 13.2.8 5.5-4 10.8-9.6 10.8S9.6 28.2 10.4 22.7C11.4 16.1 15.5 9.5 20 9.5z" fill="${c}"/>`; ey = 19; }
+  const svg = `<svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" fill="${tint}"/><ellipse cx="20" cy="35.5" rx="9" ry="1.8" fill="${dark}" opacity=".22"/>${body}<ellipse cx="16" cy="${ey - 5}" rx="3.5" ry="2.2" fill="#fff" opacity=".28"/><circle cx="17" cy="${ey}" r="1.6" fill="#111"/><circle cx="23" cy="${ey}" r="1.6" fill="#111"/></svg>`;
+  SVGS.set(key, svg); return svg;
+}
+function avatar(handleOrHuman, size = '') {
+  if (handleOrHuman === 'human') return `<span class="av human ${size}">${esc(initials(S.humanName || 'You'))}</span>`;
+  const a = agentBy(handleOrHuman);
+  return `<span class="av ${size}">${botSVG(a ? a.handle : String(handleOrHuman), a ? a.color : '#8e8e93')}</span>`;
+}
+function stackHTML(list, size = 'xs') { return `<span class="stack">${list.map(h => avatar(h, size)).join('')}</span>`; }
+const nameOf = h => h === 'human' ? S.humanName : (agentBy(h)?.name || '@' + h);
+const listNames = ns => ns.length < 2 ? ns.join('') : ns.slice(0, -1).join(', ') + ' and ' + ns[ns.length - 1];
+const dur = ms => { const m = Math.round(ms / 60000); return m < 1 ? 'under a minute' : m === 1 ? '1 min' : m < 60 ? m + ' min' : Math.round(m / 60) + ' hr'; };
+
+/* ---------- message rendering ---------- */
+function md(t) {
+  return String(t).split('```').map((p, i) => i % 2 ? `<pre><code>${esc(p.replace(/^[\w+-]*\n/, ''))}</code></pre>` : inline(p)).join('');
+}
+function inline(p) {
+  let h = esc(p);
+  h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  h = h.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
+  h = h.replace(/(^|[\s(])_([^_\n]+)_(?=[\s).,!?]|$)/g, '$1<i>$2</i>');
+  h = h.replace(/https:\/\/[^\s<]+/g, u => { const c = u.replace(/(&quot;|&#39;|[.,);:!?])+$/, ''); return `<a href="${c}" target="_blank" rel="noopener">${c}</a>${u.slice(c.length)}`; });
+  h = h.replace(/(^|[\s(>])@([a-z0-9][\w-]*)/gi, (m, a, b) => { const ag = agentBy(b); return ag ? `${a}<span class="at">@${esc(ag.handle)}</span>` : m; });
+  return h;
+}
+function toolsHTML(m) {
+  return `<div class="tools">${m.kind === 'agent' ? `<button data-reply="${esc(m.from)}" title="Reply to ${esc(nameOf(m.from))}"><svg class="ic"><use href="#i-reply"/></svg></button>` : ''}<button data-copymsg="${esc(m.id)}" title="Copy text"><svg class="ic"><use href="#i-copy"/></svg></button>${m.run ? `<button data-log="${esc(m.run)}" title="Open the run log"><svg class="ic"><use href="#i-list"/></svg>Log</button>` : ''}</div>`;
+}
+function msgHTML(m, prev, extra = {}) {
+  if (m.kind === 'system') {
+    const btn = m.action === 'continue' ? `<button class="btn" data-continue="${esc(m.ref)}">Continue</button>` : '';
+    return `<div class="sys"><span>${esc(m.text)}</span>${m.run ? `<button class="lnk" data-log="${esc(m.run)}">Log</button>` : ''}${btn}</div>`;
+  }
+  const human = m.kind === 'human', a = human ? null : agentBy(m.from);
+  const cont = !extra.summary && prev && prev.kind === m.kind && prev.from === m.from && m.ts - prev.ts < 300000;
+  const name = human ? S.humanName : (a?.name || '@' + m.from);
+  const head = cont ? `<time class="mt">${esc(hm(m.ts).replace(/\s?[AP]M$/i, ''))}</time>` : `<div class="mh"><b>${esc(name)}</b>${a?.role === 'lead' ? '<span class="tag">Lead</span>' : ''}${extra.summary ? '<span class="summary-tag">Summary</span>' : ''}<time title="${esc(new Date(m.ts).toLocaleString())}">${esc(hm(m.ts))}</time>${m.via ? `<span class="via">via ${esc(m.via.replace(' · ', ', '))}</span>` : ''}</div>`;
+  return `<div class="m${cont ? ' cont' : ''}" data-id="${esc(m.id)}">${avatar(human ? 'human' : m.from)}<div>${head}<div class="txt">${md(m.text)}</div></div>${toolsHTML(m)}</div>`;
+}
+function bubHTML(m) {
+  if (m.kind === 'system') return `<div class="note">${esc(m.text)}${m.run ? ` <button class="lnk" data-log="${esc(m.run)}">Log</button>` : ''}${m.action === 'continue' ? ` <button class="lnk" data-continue="${esc(m.ref)}">Continue</button>` : ''}</div>`;
+  return `<div class="bub" data-id="${esc(m.id)}">${avatar(m.kind === 'human' ? 'human' : m.from, 'sm')}<div><div class="bn"><b>${esc(nameOf(m.kind === 'human' ? 'human' : m.from))}</b> ${esc(hm(m.ts))}</div><div class="bubble" data-clamp><div class="clamp">${md(m.text)}</div></div></div>${toolsHTML(m)}</div>`;
+}
+function typingHTML(r) {
+  return `<div class="bub typing" data-run="${esc(r.id)}">${avatar(r.agent, 'sm')}<div><div class="bn"><b>${esc(nameOf(r.agent))}</b> <span class="el num" data-start="${r.started}">${el(Date.now() - r.started)}</span> <button class="lnk" data-log="${esc(r.id)}">Log</button>${S.mode === 'live' ? ` <button class="lnk" data-stop="${esc(r.id)}">${r.stopping ? 'Stopping' : 'Stop'}</button>` : ''}</div><div class="bubble"><span class="dots"><i></i><i></i><i></i></span><span class="act">${esc(r.activity)}</span></div></div></div>`;
+}
+const chainRuns = id => [...S.runs.values()].filter(r => r.status === 'running' && r.chain === id);
+const chainQueued = id => { const out = []; for (const q of S.queues.values()) for (const j of q) if (!j.started && j.triggers.some(t => t.chain === id)) out.push(j.agent); return out; };
+const chainLive = id => chainRuns(id).length > 0 || chainQueued(id).length > 0;
+function chainHTML(c) {
+  const running = chainRuns(c.id), queued = chainQueued(c.id), live = running.length || queued.length;
+  const agentItems = c.items.filter(m => m.kind === 'agent');
+  if (!live) {
+    if (agentItems.length <= 1) { let prev = c.root, h = ''; for (const m of c.items) { h += msgHTML(m, prev); prev = m; } return h; }
+    const fin = agentItems[agentItems.length - 1], rest = c.items.filter(m => m !== fin);
+    const who = [...new Set(agentItems.map(m => m.from))], open = S.expanded.has(c.id);
+    const cap = `<button class="cap" data-fold="${esc(c.id)}" aria-expanded="${open}">${stackHTML(who)}<span><b>${rest.filter(m => m.kind === 'agent').length + 1} messages</b> between ${esc(listNames(who.map(nameOf)))}</span><span>${esc(dur(fin.ts - c.root.ts))}</span><svg class="ic"><use href="#i-chev"/></svg></button>`;
+    return cap + (open ? `<div class="chain folded">${rest.map(bubHTML).join('')}</div>` : '') + msgHTML(fin, null, {summary: true});
+  }
+  const who = [...new Set([...agentItems.map(m => m.from), ...running.map(r => r.agent), ...queued])];
+  const busy = [...new Set([...running.map(r => r.agent), ...queued])];
+  return `<div class="chain live" data-chain="${esc(c.id)}"><div class="ch-head">${stackHTML(who)}<span><b>${esc(listNames(busy.map(nameOf)))}</b> ${busy.length > 1 ? 'are' : 'is'} on it</span><span class="grow"></span><span class="num" data-start="${c.root.ts}">${el(Date.now() - c.root.ts)}</span></div>${c.items.map(bubHTML).join('')}${running.map(typingHTML).join('')}${queued.map(h => `<div class="note">${esc(nameOf(h))} is next${S.paused ? ' (paused)' : ''}</div>`).join('')}</div>`;
+}
+function renderFeed() {
+  const room = cur(), sc = $('#scroll');
+  const pinned = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 120;
+  const msgs = room ? room.messages.slice(-300) : [];
+  S.shownChains = new Set();
+  if (!msgs.length) {
+    const L = lead(), dm = room?.dm && agentBy(room.dm);
+    $('#feed').innerHTML = S.mode === 'live' || S.mode === 'preview' ? `<div class="empty">${dm ? `<span class="av hero" style="width:76px;height:76px;border-radius:20px">${botSVG(dm.handle, dm.color)}</span><h3>${esc(dm.name)}</h3><p>This is your direct line to @${esc(dm.handle)}. Anything you send here wakes just ${esc(dm.name)}.</p>` : `<span class="hero">${officeHero()}</span><h3>Welcome to #${esc(room?.name || 'general')}</h3><p>Say what you need. A message with no @mention goes to ${L ? '@' + esc(L.handle) + ', the lead, who hands pieces to the rest of the team' : 'nobody yet. Pick a lead in Settings'}.</p>`}<p>Agents work in <code>${esc(tilde(expand(room?.cwd)))}</code>.${dm ? '' : ' Point the room at a git repo; Codex won\'t run outside one.'}</p><div class="actions"><button class="btn primary" data-open="rooms">Set the folder</button><button class="btn" data-open="teammates">Check the team</button></div></div>` : '';
+  } else {
+    const chains = new Map(), order = [];
+    for (const m of msgs) {
+      if (m.chain && m.chain !== m.id && chains.has(m.chain)) { chains.get(m.chain).items.push(m); continue; }
+      if (m.kind === 'system' && !m.chain) { order.push({m}); continue; }
+      const c = {id: m.chain || m.id, root: m, items: []}; chains.set(c.id, c); order.push({c});
+    }
+    let last = '', prev = null, h = S.mode === 'preview' ? '<div class="sample">Sample workspace</div>' : '';
+    for (const o of order) {
+      const m = o.c ? o.c.root : o.m, d = new Date(m.ts).toDateString();
+      if (d !== last) { const today = d === new Date().toDateString(); h += `<div class="day"><span>${today ? 'Today' : esc(new Date(m.ts).toLocaleDateString([], {weekday: 'long', month: 'long', day: 'numeric'}))}</span></div>`; last = d; prev = null; }
+      h += msgHTML(m, prev);
+      if (o.c) { S.shownChains.add(o.c.id); h += chainHTML(o.c); const it = o.c.items; prev = it.length ? null : m; }
+      else prev = m;
+    }
+    $('#feed').innerHTML = h;
+  }
+  renderLives();
+  if (pinned) sc.scrollTop = sc.scrollHeight;
+}
+function renderLives() {
+  const room = cur(); if (!room) return;
+  const orphan = [...S.runs.values()].filter(r => r.room === room.id && r.status === 'running' && !S.shownChains?.has(r.chain));
+  $('#lives').innerHTML = orphan.length ? `<div class="chain live">${orphan.map(typingHTML).join('')}</div>` : '';
+}
+function viaLabel(a) { const p = providerBy(a.provider); return p.id === 'default' ? (a.model || '') : p.name + (a.model ? ', ' + a.model : ''); }
+function officeHero() { return `<svg viewBox="0 0 76 76" width="76" height="76"><rect width="76" height="76" rx="20" fill="var(--fill2)"/><g transform="translate(6 8) scale(1.6)">${['claude', 'codex', 'muse'].map((h, i) => `<g transform="translate(${i * 12 - 4} ${i % 2 ? 4 : 0}) scale(.55)">${botSVG(h, ['#c2410c', '#16181f', '#0e8c7e'][i]).replace(/<rect width="40" height="40"[^>]*\/>/, '')}</g>`).join('')}</g></svg>`; }
+
+/* ---------- sidebar, header, composer ---------- */
+const STAT = {idle: 'idle', queued: 'queued', off: 'off', external: 'own session', missing: 'not installed', unwired: 'needs setup', working: 'working'};
+function statusOf(a) {
+  if (!a.enabled) return 'off';
+  if (a.mode === 'external') return 'external';
+  if ([...S.runs.values()].some(r => r.agent === a.handle && r.status === 'running')) return 'working';
+  if ([...S.queues.values()].some(q => q.some(j => j.agent === a.handle && !j.started))) return 'queued';
+  if (S.avail[a.handle] === false) return 'missing';
+  if (!plan(a, providerBy(a.provider)).ok) return 'unwired';
+  return 'idle';
+}
+function renderSidebar() {
+  const rooms = [...S.rooms.values()], unreadAll = rooms.reduce((s, r) => s + (r.unread || 0), 0);
+  const pip = $('#actpip'); pip.hidden = !unreadAll; pip.textContent = unreadAll;
+  document.querySelectorAll('.rb[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === S.view || (b.dataset.view === 'office' && S.pane === 'office'))));
+  if (S.view === 'activity') {
+    const items = [];
+    for (const r of rooms) for (const m of r.messages) if (m.kind === 'agent') items.push({r, m});
+    items.sort((a, b) => b.m.ts - a.m.ts);
+    $('#sbscroll').innerHTML = `<div class="sec"><div class="sec-h" style="cursor:default">Latest from the team</div><div class="actlist">${items.slice(0, 40).map(({r, m}) => `<button class="ai" data-jump="${esc(r.id)}">${avatar(m.from, 'sm')}<span><b>${esc(nameOf(m.from))}</b> <small style="display:inline">${r.dm ? 'direct message' : '#' + esc(r.name)}, ${esc(hm(m.ts))}</small><small>${esc(first(m.text, 120))}</small></span></button>`).join('') || '<p class="muted" style="padding:8px">Nothing yet.</p>'}</div></div>`;
+    return;
+  }
+  const n = [...S.runs.values()].filter(r => r.status === 'running').length;
+  const chans = rooms.filter(r => !r.dm), closed = S.closedSecs;
+  const dms = agents().filter(a => a.enabled);
+  $('#sbscroll').innerHTML = `<div class="statusrow"><span class="live-dot" style="background:${n ? 'var(--green)' : 'var(--t3)'}"></span><span>${S.paused ? '<b>Paused</b>, new runs wait' : n ? `<b>${n} working</b> right now` : 'Everyone is <b>idle</b>'}</span></div>
+  <div class="sec${closed.has('ch') ? ' closed' : ''}"><button class="sec-h" data-sec="ch"><svg class="ic"><use href="#i-down"/></svg>Channels</button><div class="sec-b">${chans.map(r => `<button class="row${r.unread ? ' unread' : ''}" data-room="${esc(r.id)}" aria-current="${r.id === S.room}"><span class="hash">#</span><span class="nm">${esc(r.name)}</span>${r.unread ? `<span class="badge">${r.unread}</span>` : ''}</button>`).join('')}<button class="row add" id="newroom2"><span class="hash">+</span><span class="nm">Add a channel</span></button><div id="nrslot"></div></div></div>
+  <div class="sec${closed.has('dm') ? ' closed' : ''}"><button class="sec-h" data-sec="dm"><svg class="ic"><use href="#i-down"/></svg>Direct messages</button><div class="sec-b">${dms.map(a => { const st = officeState(a).state, r = S.rooms.get('dm-' + a.handle); return `<button class="row${r?.unread ? ' unread' : ''}" data-dm="${esc(a.handle)}" aria-current="${S.room === 'dm-' + a.handle}"><span class="mini">${botSVG(a.handle, a.color)}<span class="pres ${st}"></span></span><span class="nm">${esc(a.name)}</span>${r?.unread ? `<span class="badge">${r.unread}</span>` : `<small>${esc(STAT[statusOf(a)] || '')}</small>`}</button>`; }).join('')}</div></div>
+  <div class="sec${closed.has('apps') ? ' closed' : ''}"><button class="sec-h" data-sec="apps"><svg class="ic"><use href="#i-down"/></svg>Apps</button><div class="sec-b"><button class="row" data-view="office" aria-current="${S.pane === 'office'}"><span class="mini" style="background:#0e0e11;border-radius:6px;display:grid;place-items:center"><span style="width:8px;height:8px;border-radius:2px;background:#fff"></span></span><span class="nm">Office Bot</span></button></div></div>`;
+  if (S.newRoom) showNewRoom(true);
+}
+function renderHeader() {
+  const room = cur(), dm = room?.dm && agentBy(room.dm);
+  $('#roomname').innerHTML = dm ? `${avatar(dm.handle, 'xs')}<span style="margin-left:4px">${esc(dm.name)}</span>` : `<span class="hash">#</span>${esc(room?.name || 'general')}`;
+  $('#folder span').textContent = room ? tilde(expand(room.cwd)) : '~';
+  const on = agents().filter(a => a.enabled);
+  $('#members').innerHTML = `${stackHTML(on.slice(0, 4).map(a => a.handle))}<span class="num">${on.length}</span>`;
+  const n = [...S.runs.values()].filter(r => r.status === 'running').length;
+  $('#runsbtn').classList.toggle('busy', n > 0); $('#runslabel').textContent = S.paused ? 'Paused' : n ? `${n} working` : 'All quiet';
+  $('#runsbtn').setAttribute('aria-pressed', String(S.pane === 'runs'));
+  $('#officebtn').setAttribute('aria-pressed', String(S.pane === 'office'));
+  const pb = $('#pause'); pb.setAttribute('aria-pressed', String(S.paused));
+  pb.innerHTML = `<svg class="ic"><use href="#i-${S.paused ? 'play' : 'pause'}"/></svg><span>${S.paused ? 'Resume' : 'Pause'}</span>`;
+  $('#me').textContent = initials(S.humanName || 'You');
+}
+function renderTo() {
+  const room = cur(), L = room?.dm ? agentBy(room.dm) : lead();
+  $('#to').innerHTML = room?.dm ? '' : agents().filter(a => a.enabled).map(a => `<button type="button" class="chip" data-to="${esc(a.handle)}" aria-pressed="${S.toggles.has(a.handle)}">${avatar(a.handle, 'xs')}${esc(a.handle)}</button>`).join('');
+  $('#ta').placeholder = room?.dm ? `Message ${agentBy(room.dm)?.name || room.name}` : `Message #${room?.name || 'general'}${L ? `, or just ask @${L.handle}` : ''}`;
+}
+function renderAll() { renderHeader(); renderSidebar(); renderTo(); renderFeed(); renderPane(); setMenu(); officeSync(); }
+const renderRail = () => { renderSidebar(); officeSync(); };
+
+/* ---------- side pane: office, runs, search ---------- */
+function renderPane() {
+  const pane = $('#pane'), open = !!S.pane;
+  pane.hidden = !open; $('#divider').hidden = !open || S.officeFull;
+  $('#app').classList.toggle('office-full', open && S.officeFull && S.pane === 'office');
+  if (!open) return;
+  pane.style.width = S.officeFull && S.pane === 'office' ? '' : S.paneW + 'px';
+  for (const b of document.querySelectorAll('#paneseg button')) { b.setAttribute('aria-pressed', String(b.dataset.pane === S.pane)); if (b.dataset.pane === 'search') b.hidden = !S.q; }
+  $('#office').hidden = S.pane !== 'office'; $('#runsv').hidden = S.pane !== 'runs'; $('#searchv').hidden = S.pane !== 'search';
+  $('#paneexpand').hidden = S.pane !== 'office';
+  $('#paneexpand').title = S.officeFull ? 'Back to the side' : 'Expand the office';
+  if (S.pane === 'office') { ensureScene(); officeSync(true); }
+  if (S.pane === 'runs') renderLog();
+  if (S.pane === 'search') renderSearch();
+}
+function setPane(p) { S.pane = S.pane === p && p !== 'search' ? null : p; if (S.pane !== 'office') S.officeFull = false; renderPane(); renderHeader(); renderSidebar(); OFF.scene?.resize?.(); }
+const renderDrawer = () => { if (S.pane === 'runs') renderLog(); };
+function runRow(r) {
+  const extra = r.status === 'running' ? el(Date.now() - r.started) : r.ended ? el(r.ended - r.started) : '';
+  return `<button class="runrow" data-pick="${esc(r.id)}" aria-current="${S.logRun === r.id}">${avatar(r.agent, 'sm')}<span><b>${esc(nameOf(r.agent))}</b> <small class="num">${esc(hm(r.started))}${extra ? ', ran ' + esc(extra) : ''}</small></span><span class="pill ${esc(r.status)}">${esc(r.status)}</span></button>`;
+}
+function renderLog() {
+  const box = $('#runsv'), list = [...S.runs.values()].filter(r => r.room === S.room).sort((a, b) => b.started - a.started).slice(0, 40);
+  const r = S.runs.get(S.logRun);
+  let h = '';
+  if (r) {
+    const usage = r.cost != null ? `$${Number(r.cost).toFixed(3)}` : r.usage ? `${r.usage.input_tokens ?? '?'} tokens in, ${r.usage.output_tokens ?? '?'} out` : '';
+    const facts = [['Started', `${hm(r.started)}${r.ended ? ', ran ' + el(r.ended - r.started) : ''}`], ['Route', r.via || 'your config'], ['Exit code', r.code ?? ''], ['Usage', usage], ['Session', r.session || '']].filter(f => f[1] !== '' && f[1] != null);
+    h += `<div class="runhead">${avatar(r.agent)}<div><b>${esc(nameOf(r.agent))}</b> <span class="pill ${esc(r.status)}">${esc(r.status)}</span><dl class="facts">${facts.map(([k, v]) => `<dt>${k}</dt><dd${k === 'Session' ? ' class="mono"' : ''}>${esc(v)}</dd>`).join('')}</dl></div></div>`;
+    h += `<details><summary>Prompt sent</summary><pre>${esc(r.prompt || '(not loaded)')}</pre></details>`;
+    if (r.cmdline) h += `<details><summary>Command and environment</summary><pre>${esc(r.cmdline)}</pre></details>`;
+    h += `<div id="evs">${(r.events || []).slice(-800).map(evHTML).join('')}</div>`;
+    if (r.stderr) h += `<details><summary>Error output</summary><pre>${esc(r.stderr)}</pre></details>`;
+    if (S.mode === 'live') h += `<div class="actions"><button class="btn" data-reveal="${esc(r.id)}"><svg class="ic"><use href="#i-folder"/></svg>Show in Finder</button></div>`;
+    h += '<div class="gh" style="margin:22px 2px 8px">All runs here</div>';
+  }
+  h += list.length ? `<div class="runs">${list.map(runRow).join('')}</div>` : `<p class="muted">No runs in this ${cur()?.dm ? 'conversation' : 'channel'} since the app opened. Older runs open from the Log button on a message.</p>`;
+  box.innerHTML = h;
+}
+const evHTML = e => `<div class="ev k-${esc(e.k)}"><time>${esc(hms(e.t))}</time><span class="k">${esc(e.k)}</span><span class="x">${esc(e.x)}</span></div>`;
+function renderSearch() {
+  const q = S.q.trim().toLowerCase(), box = $('#searchv');
+  if (q.length < 2) { box.innerHTML = '<p class="muted">Type at least two letters.</p>'; return; }
+  const hits = [];
+  for (const r of S.rooms.values()) for (const m of r.messages) if (m.kind !== 'system' && m.text.toLowerCase().includes(q)) hits.push({r, m});
+  hits.sort((a, b) => b.m.ts - a.m.ts);
+  const mark = t => { const s = first(t, 220), i = s.toLowerCase().indexOf(q); return i < 0 ? esc(s) : esc(s.slice(0, i)) + '<mark>' + esc(s.slice(i, i + q.length)) + '</mark>' + esc(s.slice(i + q.length)); };
+  box.innerHTML = `<div class="gh" style="margin:0 2px 8px">${hits.length} result${hits.length === 1 ? '' : 's'} for “${esc(S.q.trim())}”</div>` + hits.slice(0, 60).map(({r, m}) => `<button class="hit" data-jump="${esc(r.id)}" data-msg="${esc(m.id)}">${avatar(m.kind === 'human' ? 'human' : m.from, 'sm')}<span><b>${esc(nameOf(m.kind === 'human' ? 'human' : m.from))}</b> <small>${r.dm ? 'direct message' : '#' + esc(r.name)}, ${esc(hm(m.ts))}</small><br>${mark(m.text)}</span></button>`).join('');
+}
+
+/* ---------- Office Bot (after agent-office) ---------- */
+const OSTATES = {working: {label: 'Working', color: '#34c759'}, finished: {label: 'Finished', color: '#3b82f6'}, 'needs-you': {label: 'Needs you', color: '#f59e0b'}, stuck: {label: 'Stuck', color: '#ef4444'}, idle: {label: 'Idle', color: '#a3a3ab'}};
+const OACTIVE = ['working', 'finished', 'needs-you', 'stuck'];
+const OFF = {scene: null, loading: false, failed: false, openId: null, touring: false, timer: 0};
+function lastMsgOf(h) { let best = null, room = null; for (const r of S.rooms.values()) for (let i = r.messages.length - 1; i >= 0; i--) { const m = r.messages[i]; if (m.kind === 'agent' && m.from === h) { if (!best || m.ts > best.ts) { best = m; room = r; } break; } } return {m: best, room}; }
+function officeState(a) {
+  const run = [...S.runs.values()].find(r => r.agent === a.handle && r.status === 'running');
+  if (run) return {state: 'working', task: run.activity && run.activity !== 'starting' ? run.activity : `Working in ${S.rooms.get(run.room)?.dm ? 'a DM' : '#' + (S.rooms.get(run.room)?.name || run.room)}`, updated: run.started};
+  const st = statusOf(a);
+  if (st === 'missing' || st === 'unwired') return {state: 'stuck', task: st === 'missing' ? `${a.program} isn't installed` : 'Needs setup in Settings', updated: Date.now()};
+  const done = [...S.runs.values()].filter(r => r.agent === a.handle && r.ended).sort((x, y) => y.ended - x.ended)[0];
+  if (done && done.status === 'failed' && Date.now() - done.ended < 3600000) return {state: 'stuck', task: first(done.err || 'Run failed', 60), updated: done.ended};
+  const {m, room} = lastMsgOf(a.handle);
+  if (m && room && room.messages[room.messages.length - 1] === m && /\?\s*$|\?[^?]{0,80}$/.test(m.text.trim())) return {state: 'needs-you', task: first(m.text.split(/(?<=[.!?])\s+/).filter(s => s.includes('?')).pop() || m.text, 70), updated: m.ts};
+  if (m && Date.now() - m.ts < 30 * 60000) return {state: 'finished', task: first(m.text.split('\n')[0], 70), updated: m.ts};
+  return {state: 'idle', task: m ? first(m.text.split('\n')[0], 70) : '', updated: m?.ts || null};
+}
+function officeAgents() { return agents().filter(a => a.enabled).map(a => ({id: a.handle, name: a.name, source: CLIS[a.kind].label, role: a.role === 'lead' ? 'Lead' : 'Teammate', floor: 0, colorHex: /^#[0-9a-f]{6}$/i.test(a.color) ? a.color : '#888888', route: viaLabel(a) || 'your config', ...officeState(a)})); }
+async function ensureScene() {
+  if (OFF.scene || OFF.loading || OFF.failed) return;
+  OFF.loading = true;
+  try {
+    const mod = await import('./office/scene.js');
+    OFF.scene = mod.createScene($('#o-stage'), {onSelect: id => officeOpen(id)});
+    officeSync(true);
+  } catch (e) { console.error(e); OFF.failed = true; $('#o-fallback').hidden = false; }
+  OFF.loading = false;
+}
+function officeSync(now) {
+  if (!now) { clearTimeout(OFF.timer); OFF.timer = setTimeout(() => officeSync(true), 250); return; }
+  if (S.pane !== 'office') return;
+  const list = officeAgents(), cnt = st => list.filter(a => a.state === st).length, dot = c => `<i class="dot" style="background:${c}"></i>`;
+  const items = [['working', 'working'], ['needs-you', 'waiting'], ['stuck', 'errors'], ['finished', 'finished'], ['idle', 'resting']];
+  $('#o-counts').innerHTML = items.map(([st, l]) => `<span>${dot(OSTATES[st].color)}<b>${cnt(st)}</b> ${l}</span>`).join('');
+  const w = list.find(a => a.state === 'needs-you'), t = $('#o-toast');
+  t.hidden = !w; $('#office').classList.toggle('has-toast', !!w);
+  if (w) { const more = cnt('needs-you') - 1; t.innerHTML = `<span class="sq" style="background:${w.colorHex}"></span><div class="o-tt"><b>${esc(w.name)} needs you</b><small>${esc(first(w.task, 48) || 'Waiting on you')}${more ? ` · +${more} more` : ''}</small></div><button class="o-btn" data-oview="${esc(w.id)}">View</button>`; }
+  const row = (a, sub) => `<button class="o-arow" data-oagent="${esc(a.id)}"><span class="sq" style="background:${a.colorHex}33"><i style="background:${a.colorHex}"></i></span><span class="o-at"><b>${esc(a.name)}</b><small>${sub}</small></span></button>`;
+  const wl = list.filter(a => a.state === 'needs-you'), fl = list.filter(a => a.state === 'finished');
+  $('#o-waitBadge').textContent = wl.length; $('#o-waitBadge').classList.toggle('hot', wl.length > 0);
+  $('#o-waitBody').innerHTML = wl.length ? wl.map(a => row(a, esc(first(a.task, 40)))).join('') : '<div class="oempty">Nothing needs you</div>';
+  $('#o-finBadge').textContent = fl.length;
+  $('#o-finBody').innerHTML = fl.length ? fl.map(a => row(a, esc(first(a.task, 40)))).join('') : '<div class="oempty">Nothing finished yet</div>';
+  $('#o-bWorking').textContent = cnt('working');
+  $('#o-bSub').textContent = `${list.length} bot${list.length === 1 ? '' : 's'}`;
+  $('#o-agentList').innerHTML = list.length ? list.map(a => row(a, `${OSTATES[a.state].label}${a.task ? ' · ' + esc(first(a.task, 60)) : ''}`)).join('') : '<div class="oempty">No teammates yet</div>';
+  const acts = [];
+  for (const r of S.rooms.values()) for (const m of r.messages) if (m.kind === 'agent') acts.push(m);
+  acts.sort((a, b) => b.ts - a.ts);
+  $('#o-actList').innerHTML = acts.length ? acts.slice(0, 8).map(x => `<div class="o-act"><time>${pad(new Date(x.ts).getHours())}:${pad(new Date(x.ts).getMinutes())}</time><span><b>${esc(nameOf(x.from))}</b> · ${esc(first(x.text, 70))}</span></div>`).join('') : '<div class="oempty">No activity yet</div>';
+  $('#o-updated').textContent = `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`;
+  if (OFF.scene) {
+    OFF.scene.setData([{id: 'main', name: 'Main'}], list);
+    const day = new Date(); day.setHours(0, 0, 0, 0);
+    const bars = Array(12).fill(0), hourNow = Math.floor(Date.now() / 3600000);
+    for (const m of acts) { const k = hourNow - Math.floor(m.ts / 3600000); if (k >= 0 && k < 12) bars[11 - k]++; }
+    OFF.scene.setStats({runs: acts.filter(m => m.ts >= day.getTime()).length + cnt('working'), label: 'replies today', bars});
+  }
+  if (OFF.openId) officeOpen(OFF.openId);
+}
+function officeOpen(id) {
+  const a = officeAgents().find(x => x.id === id); if (!a) return officeClose();
+  OFF.openId = id;
+  const d = $('#o-detail');
+  d.innerHTML = `<button class="o-x" data-oclose aria-label="Close">×</button><div class="o-dh"><span class="sq big" style="background:${a.colorHex}"></span><div><b>${esc(a.name)}</b><span class="o-chip" style="background:${OSTATES[a.state].color}">${OSTATES[a.state].label}</span></div></div>
+    <dl><dt>Source</dt><dd>${esc(a.source)}</dd><dt>Role</dt><dd>${esc(a.role)}</dd><dt>Route</dt><dd>${esc(a.route)}</dd><dt>Task</dt><dd>${esc(a.task || '—')}</dd><dt>Updated</dt><dd>${a.updated ? esc(new Date(a.updated).toLocaleString([], {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'})) : '—'}</dd></dl>
+    <div class="o-dactions"><button class="o-btn" data-dm="${esc(a.id)}">Message</button><button class="o-btn" data-open-agent-h="${esc(a.id)}">Settings</button></div>`;
+  d.hidden = false; $('#o-detback').hidden = false;
+}
+function officeClose() { OFF.openId = null; $('#o-detail').hidden = true; $('#o-detback').hidden = true; }
+
+/* ---------- settings: System Settings style ---------- */
+const TABS = [['teammates', 'Teammates', '#007aff', 'i-person'], ['providers', 'Providers', '#af52de', 'i-net'], ['rooms', 'Channels', '#34c759', 'i-hash'], ['general', 'General', '#8e8e93', 'i-sliders']];
+function openSettings(tab, detail = null) {
+  if (!S.sheetOpen) { S.draft = clone(S.team); S.draftSecrets = {}; }
+  S.sheetOpen = true; if (tab) S.tab = tab; S.detail = detail;
+  $('#sheet').classList.add('open'); $('#serr').textContent = '';
+  $('#ssave').textContent = S.mode === 'live' ? 'Save' : 'Install the app to save'; $('#ssave').disabled = S.mode !== 'live';
+  renderSheet();
+  S.D?.window?.show?.().catch(() => {});
+}
+function closeSettings() { S.sheetOpen = false; S.draft = null; S.draftSecrets = {}; S.detail = null; $('#sheet').classList.remove('open'); }
+function renderSheet() {
+  const t = S.draft;
+  $('#snav').innerHTML = TABS.map(([id, label, col, ic]) => {
+    const n = id === 'teammates' ? t.agents.length : id === 'providers' ? t.providers.length + 2 : id === 'rooms' ? t.rooms.filter(r => !r.dm).length : '';
+    return `<button data-tab="${id}" aria-current="${S.tab === id}"><span class="sico" style="background:${col}"><svg class="ic"><use href="#${ic}"/></svg></span><span>${label}</span><small>${n}</small></button>`;
+  }).join('');
+  const d = S.detail, title = TABS.find(x => x[0] === S.tab)[1];
+  $('#stitlebar').innerHTML = d ? `<button class="back" data-back><svg class="ic" style="width:14px;height:14px"><use href="#i-left"/></svg>${title}</button><h2>${esc(d.k === 'agent' ? (t.agents[d.i]?.name || '') : providerBy(d.id, t).name)}</h2>` : `<h2 id="stitle">${title}</h2>`;
+  const sb = $('#sbody'), y = sb.scrollTop;
+  const open = new Set([...sb.querySelectorAll('details[data-key][open]')].map(x => x.dataset.key));
+  sb.innerHTML = datalists(t) + (d ? (d.k === 'agent' ? agentDetail(t, d.i) : provDetail(t, d.id)) : ({teammates: tabTeammates, providers: tabProviders, rooms: tabRooms, general: tabGeneral}[S.tab])(t));
+  for (const x of sb.querySelectorAll('details[data-key]')) if (open.has(x.dataset.key)) x.open = true;
+  sb.scrollTop = S.keepScroll ? y : 0; S.keepScroll = true;
+}
+function datalists(t) {
+  return providersOf(t).map(p => { const list = [...new Set([...(p.models || []), ...(SUGGEST[p.kind] || [])])]; return `<datalist id="dl-${esc(p.id)}">${list.map(m => `<option value="${esc(m)}">`).join('')}</datalist>`; }).join('');
+}
+const fld = (path, val, o = {}) => `<input class="field${o.mono ? ' mono' : ''}" type="${o.type || 'text'}" data-b="${path}"${o.t ? ` data-t="${o.t}"` : ''} value="${esc(val)}"${o.ph ? ` placeholder="${esc(o.ph)}"` : ''}${o.list ? ` list="${esc(o.list)}"` : ''}${o.r ? ' data-r' : ''} autocomplete="off" spellcheck="false"${o.style ? ` style="${o.style}"` : ''}>`;
+const pick = (path, val, opts, o = {}) => `<select class="field" data-b="${path}"${o.r === false ? '' : ' data-r'}>${opts.map(([v, l]) => `<option value="${esc(v)}"${v === val ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+const sw = (path, val, o = {}) => `<label class="sw"><input type="checkbox" role="switch" data-b="${path}" data-t="bool"${val ? ' checked' : ''}${o.r ? ' data-r' : ''}><span></span></label>`;
+const seg = (path, val, opts) => `<div class="seg" role="radiogroup">${opts.map(([v, l]) => `<button type="button" data-segp="${path}" data-segv="${esc(v)}" aria-pressed="${v === val}">${esc(l)}</button>`).join('')}</div>`;
+const gr = (label, control, o = {}) => `<div class="gr"><span class="gl">${label}${o.sub ? `<small>${o.sub}</small>` : ''}</span><span class="gc${o.wide ? ' wide' : ''}">${control}</span></div>`;
+function routeLine(a, p, w) { return `<span class="route"><span><i style="--c:${esc(a.color)}"></i>${esc(CLIS[a.kind].label)}</span><span class="arr">→</span><span><i style="--c:${KINDS[p.kind].color}"></i>${esc(p.name)}</span><span class="arr">→</span><span class="m2">${esc(a.model || 'default model')}</span>${w.ok ? '' : '<span style="color:var(--orange)">needs setup</span>'}</span>`; }
+const dOpts = () => ({secrets: S.secrets, draftSecrets: S.draftSecrets});
+function tabTeammates(t) {
+  return `<p class="lead">Each teammate is a coding CLI on this computer. Pick how it pays: your subscription, an API key, Vertex, or a gateway like LiteLLM.</p>
+  <div class="group">${t.agents.map((a, i) => { const p = providerBy(a.provider, t), w = plan(a, p, dOpts()); return `<button class="gr link" data-open-agent="${i}"><span class="av">${botSVG(a.handle, a.color)}</span><span class="gl"><span><b style="font-weight:600">${esc(a.name || 'Unnamed')}</b> <span style="color:var(--t2)">@${esc(a.handle)}${a.role === 'lead' ? ', lead' : ''}</span></span>${routeLine(a, p, w)}</span><span class="pill ${!a.enabled ? '' : w.ok ? 'ok' : 'no'}">${!a.enabled ? 'Off' : w.ok ? 'Ready' : 'Needs setup'}</span><svg class="ic chev"><use href="#i-chev"/></svg></button>`; }).join('')}</div>
+  <div class="actions"><select class="field" id="addcli" aria-label="CLI to add">${Object.entries(CLIS).map(([k, c]) => `<option value="${k}">${esc(c.label)}</option>`).join('')}</select><button class="btn" id="addmate"><svg class="ic"><use href="#i-plus"/></svg>Add Teammate</button></div>`;
+}
+function agentDetail(t, i) {
+  const a = t.agents[i]; if (!a) return '';
+  const p = providerBy(a.provider, t), w = plan(a, p, dOpts()), f = S.avail[a.handle];
+  const provOpts = providersOf(t).map(x => { const ok = plan({...a, model: a.model || 'x'}, x, dOpts()).ok || (!x.project && x.kind === 'vertex'); return [x.id, x.name + (ok ? '' : ` (doesn't fit ${CLIS[a.kind].label})`)]; });
+  return `<div class="ahead"><span class="av">${botSVG(a.handle, a.color)}</span><div><h3>${esc(a.name || 'Unnamed')}</h3><p>@${esc(a.handle)}, ${esc(CLIS[a.kind].label)}</p>${routeLine(a, p, w)}</div></div>
+  <div class="wire${w.ok ? '' : ' no'}">${w.ok ? esc(w.summary) : '<b>Not wired yet.</b> ' + esc(w.why)}</div>
+  <div class="gh">Model</div><div class="group">${gr('Provider', pick(`agents.${i}.provider`, a.provider, provOpts))}${gr('Model', fld(`agents.${i}.model`, a.model, {mono: true, list: 'dl-' + p.id, ph: 'CLI default', r: true}), {sub: 'Blank uses the CLI\'s own default'})}</div>
+  <div class="gh">Teammate</div><div class="group">${gr('Name', fld(`agents.${i}.name`, a.name))}${gr('Handle', fld(`agents.${i}.handle`, a.handle, {mono: true}), {sub: 'What people type after @'})}${gr('Role', seg(`agents.${i}.role`, a.role, [['lead', 'Lead'], ['worker', 'Teammate']]), {sub: 'The lead gets every message with no @mention'})}${gr('On the team', sw(`agents.${i}.enabled`, a.enabled, {r: true}))}${gr('Runs', seg(`agents.${i}.mode`, a.mode, [['spawn', 'Started here'], ['external', 'Own session']]), {sub: 'Own session: it listens with scripts/team.py watch'})}</div>
+  <div class="gh">Command line</div><div class="group">${gr('CLI type', pick(`agents.${i}.kind`, a.kind, Object.entries(CLIS).map(([k, c]) => [k, c.label])))}${gr('Command', fld(`agents.${i}.program`, a.program, {mono: true}), {sub: f === false ? `<span class="err">${esc(a.program)} not found on your PATH</span>` : f ? esc(tilde(f)) : ''})}${gr('Output', pick(`agents.${i}.format`, a.format, [['claude', 'Claude stream-json'], ['codex', 'Codex JSONL'], ['gemini', 'Gemini JSON'], ['text', 'Plain text']], {r: false}))}${gr('Arguments', fld(`agents.${i}.args`, joinArgs(a.args), {mono: true, t: 'args'}), {wide: true})}${gr('When resuming', fld(`agents.${i}.resumeArgs`, joinArgs(a.resumeArgs), {mono: true, t: 'args', ph: 'blank: always start fresh'}), {wide: true})}${gr('Model flag', fld(`agents.${i}.modelFlag`, a.modelFlag, {mono: true, ph: 'none'}))}${gr('Working folder', fld(`agents.${i}.cwd`, a.cwd, {mono: true, ph: 'the channel\'s folder'}))}${gr('Send the prompt on stdin', sw(`agents.${i}.stdin`, a.stdin))}</div>
+  <p class="gf">Placeholders: <code>{session}</code> <code>{prompt_file}</code> <code>{room}</code> <code>{cwd}</code> <code>{provider_args}</code>. Runs are headless, so nothing can stop and ask you; each CLI uses the permissions in its own config. Add <code>--permission-mode acceptEdits</code> or <code>--sandbox workspace-write</code> here for more room.</p>
+  <div class="group" style="margin-top:20px"><button class="gr link" data-rm-agent="${i}" style="justify-content:center;color:var(--red)">Remove ${esc(a.name || 'Teammate')}</button></div>`;
+}
+function keyRows(p, i) {
+  if (!KINDS[p.kind].key) return '';
+  const saved = S.draftSecrets[p.id] === null ? false : !!(S.draftSecrets[p.id] || S.secrets[p.id]);
+  const src = gr('Key', pick(`providers.${i}.keySource`, p.keySource, [['env', 'From my shell'], ['command', 'From a command'], ['saved', 'Saved here'], ['none', 'No key']]));
+  const field = p.keySource === 'env' ? gr('Variable', fld(`providers.${i}.keyEnv`, p.keyEnv, {mono: true, ph: p.kind === 'litellm' ? 'LITELLM_API_KEY' : p.kind === 'openai' ? 'OPENAI_API_KEY' : p.kind === 'anthropic' ? 'ANTHROPIC_API_KEY' : 'MY_GATEWAY_KEY', r: true}), {sub: 'Read from your login shell'})
+    : p.keySource === 'command' ? gr('Command', fld(`providers.${i}.keyCmd`, p.keyCmd, {mono: true, ph: 'op read op://dev/litellm/key', r: true}), {sub: 'Prints the key; cached 5 minutes', wide: true})
+    : p.keySource === 'saved' ? gr(saved ? 'Replace key' : 'Key', `<input class="field mono" type="password" data-secret="${esc(p.id)}" placeholder="${saved ? '•••••••• saved' : 'sk-…'}" autocomplete="off">${saved ? ` <button type="button" class="btn" data-forget="${esc(p.id)}">Forget</button>` : ''}`, {sub: 'Stored in secrets.json, readable only by you'}) : '';
+  return src + field;
+}
+function tabProviders(t) {
+  const users = id => t.agents.filter(a => a.provider === id);
+  const row = (p, builtin) => { const k = KINDS[p.kind], tr = S.ptest[p.id], u = users(p.id); return `<button class="gr link" data-open-prov="${esc(p.id)}"><span class="kind" style="background:${k.color}">${k.short}</span><span class="gl"><span style="font-weight:600">${esc(p.name)}</span><small>${esc(k.tag || k.label)}${u.length ? ', used by ' + esc(u.map(a => '@' + a.handle).join(' ')) : ''}</small></span><span class="pill ${builtin ? '' : tr ? (tr.ok ? 'ok' : 'no') : ''}">${builtin ? 'Built in' : tr ? (tr.ok ? 'Works' : 'Failed') : 'Untested'}</span><svg class="ic chev"><use href="#i-chev"/></svg></button>`; };
+  return `<p class="lead">Where model calls go and who pays for them. Subscriptions and As configured are always here. Add Vertex, LiteLLM, API keys or any other gateway, then pick one for each teammate.</p>
+  <div class="gh">Built in</div><div class="group">${BUILTIN.map(p => row(p, true)).join('')}</div>
+  <div class="gh">Yours</div><div class="group">${t.providers.length ? t.providers.map(p => row(p, false)).join('') : '<div class="gr"><span class="gl" style="color:var(--t2)">None yet. Add Vertex or LiteLLM below.</span></div>'}</div>
+  <div class="actions"><select class="field" id="addprov" aria-label="Provider to add">${ADDABLE.map(k => `<option value="${k}">${esc(KINDS[k].label)}</option>`).join('')}</select><button class="btn" id="addprovbtn"><svg class="ic"><use href="#i-plus"/></svg>Add Provider</button></div>`;
+}
+function provDetail(t, id) {
+  const p = providerBy(id, t), k = KINDS[p.kind], tr = S.ptest[p.id], builtin = !!k.builtin, i = t.providers.indexOf(p);
+  let h = `<div class="ahead"><span class="kind" style="background:${k.color};width:56px;height:56px;border-radius:14px;font-size:15px">${k.short}</span><div><h3>${esc(p.name)}</h3><p>${esc(k.label)}</p></div></div><p class="lead">${esc(k.about)}</p>`;
+  if (builtin) return h + (p.id === 'subscription' ? `<div class="actions"><button class="btn" data-ptest="subscription"${S.mode !== 'live' ? ' disabled' : ''}>Check Sign-ins</button>${tr ? `<span class="muted ${tr.ok ? '' : 'err'}">${esc(tr.msg)}</span>` : ''}</div>` : '');
+  let rows = gr('Name', fld(`providers.${i}.name`, p.name));
+  if (p.kind === 'vertex') rows += gr('Project ID', fld(`providers.${i}.project`, p.project, {mono: true, ph: 'my-gcp-project', r: true})) + gr('Region', fld(`providers.${i}.region`, p.region, {mono: true, ph: 'global', r: true}), {sub: 'global works for most Claude models'}) + gr('Service account file', fld(`providers.${i}.credentials`, p.credentials, {mono: true, ph: 'blank: gcloud ADC'}));
+  if (p.kind === 'litellm') rows += gr('Proxy URL', fld(`providers.${i}.baseUrl`, p.baseUrl, {mono: true, ph: 'http://localhost:4000', r: true}));
+  if (p.kind === 'gateway') rows += gr('Base URL', fld(`providers.${i}.baseUrl`, p.baseUrl, {mono: true, ph: 'https://llm.example.com', r: true}), {sub: p.protocol === 'openai' ? 'Codex adds /responses, so include /v1 if needed' : ''}) + gr('Speaks', pick(`providers.${i}.protocol`, p.protocol, [['anthropic', 'Anthropic Messages'], ['openai', 'OpenAI Responses'], ['gemini', 'Gemini API']])) + (p.protocol === 'anthropic' ? gr('Key header', seg(`providers.${i}.authHeader`, p.authHeader, [['bearer', 'Bearer'], ['x-api-key', 'x-api-key']])) : '');
+  if (p.kind === 'env') rows += `<div class="gr"><span class="gc wide" style="flex-direction:column;align-items:stretch"><span class="gl" style="margin-bottom:6px">Environment for the run<small>One KEY=value per line. Write {key} where the key goes.</small></span><textarea class="field" data-b="providers.${i}.envText" data-r spellcheck="false" placeholder="ANTHROPIC_BASE_URL=https://openrouter.ai/api&#10;ANTHROPIC_AUTH_TOKEN={key}">${esc(p.envText)}</textarea></span></div>`;
+  h += `<div class="group">${rows}</div>`;
+  if (k.key) h += `<div class="gh">Key</div><div class="group">${keyRows(p, i)}</div>`;
+  if (p.kind === 'vertex') h += '<p class="gf">Sign in once with <code>gcloud auth application-default login</code> and enable the models you want in Model Garden.</p>';
+  h += `<div class="actions"><button class="btn" data-ptest="${esc(p.id)}"${S.mode !== 'live' ? ' disabled' : ''}>Test Connection</button>${tr ? `<span class="muted ${tr.ok ? '' : 'err'}">${esc(tr.msg)}</span>` : ''}</div>`;
+  if (p.models?.length) h += `<div class="gh">Models from the last test</div><div class="group"><div class="chips">${p.models.slice(0, 80).map(m => `<button type="button" data-copy="${esc(m)}" title="Copy">${esc(m)}</button>`).join('')}</div></div>`;
+  return h + `<div class="group" style="margin-top:20px"><button class="gr link" data-rm-prov="${i}" style="justify-content:center;color:var(--red)">Remove ${esc(p.name)}</button></div>`;
+}
+function tabRooms(t) {
+  const rows = t.rooms.map((r, i) => r.dm ? '' : `<div class="gr"><span class="gl" style="flex:0 0 140px">${fld(`rooms.${i}.name`, r.name)}</span><span class="gc wide">${fld(`rooms.${i}.cwd`, r.cwd, {mono: true})}<button class="icbtn" data-rm-room="${i}" title="Remove #${esc(r.name)}"${t.rooms.filter(x => !x.dm).length < 2 ? ' disabled' : ''}><svg class="ic"><use href="#i-trash"/></svg></button></span></div>`).join('');
+  return `<p class="lead">Each channel is a file in <code>~/.agent-team/rooms</code>, and its agents work in the channel's folder. Point a channel at a git repo; Codex won't run outside one. Removing a channel keeps its file.</p>
+  <div class="gh">Channels and folders</div><div class="group">${rows}</div>
+  <div class="gh">New channel</div><div class="group"><div class="gr"><span class="gl" style="flex:0 0 140px"><input class="field" id="addroomname" placeholder="counterpart"></span><span class="gc wide"><input class="field mono" id="addroomcwd" placeholder="~/code/project"><button class="btn" id="addroombtn">Add</button></span></div></div>`;
+}
+function tabGeneral(t) {
+  return `<div class="gh" style="margin-top:0">You</div><div class="group">${gr('Your name', fld('humanName', t.humanName, {ph: S.humanName}))}</div>
+  <div class="gh">Conversations</div><div class="group">${gr('Send handed-out work back to the lead', sw('reviewByLead', t.reviewByLead), {sub: 'The lead reviews what teammates report'})}${gr('Loop guard', fld('maxHops', t.maxHops, {type: 'number', t: 'int', style: 'width:80px;text-align:right'}), {sub: 'Pause after this many handoffs in a row'})}${gr('Most runs at once', fld('maxRuns', t.maxRuns, {type: 'number', t: 'int', style: 'width:80px;text-align:right'}))}</div>
+  <div class="gh">Notifications</div><div class="group">${gr('Notify me when the app is in the background', sw('notify', t.notify))}</div>
+  ${S.mode === 'live' ? `<div class="gh">Data</div><div class="group"><button class="gr link" id="opendata"><span class="gl">Open the data folder<small>~/.agent-team</small></span><svg class="ic chev"><use href="#i-chev"/></svg></button><button class="gr link" id="recheck"><span class="gl">Look for the CLIs again</span><svg class="ic chev"><use href="#i-chev"/></svg></button></div>` : ''}
+  <p class="gf"><code>team.json</code> holds these settings, <code>secrets.json</code> saved keys, <code>state.json</code> sessions, plus the <code>rooms</code> and <code>runs</code> folders.</p>`;
+}
+function setPath(o, path, v) { const ks = path.split('.'); let x = o; for (const k of ks.slice(0, -1)) x = x[k]; x[ks[ks.length - 1]] = v; }
+function onSheetInput(e) {
+  const n = e.target;
+  if (n.dataset.secret != null) { const v = n.value.trim(); if (v) S.draftSecrets[n.dataset.secret] = v; else delete S.draftSecrets[n.dataset.secret]; return; }
+  const path = n.dataset.b; if (!path || !S.draft) return;
+  let v = n.type === 'checkbox' ? n.checked : n.value;
+  if (n.dataset.t === 'args') v = splitArgs(v);
+  if (n.dataset.t === 'int') v = parseInt(v, 10) || 0;
+  setPath(S.draft, path, v);
+  if (/^agents\.\d+\.kind$/.test(path)) { const i = +path.split('.')[1], a = S.draft.agents[i], pr = CLIS[v].preset; Object.assign(a, {program: pr.program || a.program, format: pr.format, args: [...pr.args], resumeArgs: [...pr.resumeArgs], stdin: pr.stdin, modelFlag: pr.modelFlag}); }
+  if (n.hasAttribute('data-r') && (e.type === 'change' || n.tagName === 'SELECT' || n.type === 'checkbox')) renderSheet();
+}
+async function saveSettings() {
+  const t = S.draft, err = m => { $('#serr').textContent = m; };
+  if (S.mode !== 'live') return;
+  for (const [i, a] of t.agents.entries()) {
+    a.handle = String(a.handle || '').trim().toLowerCase().replace(/^@/, '');
+    if (!/^[a-z0-9][a-z0-9_-]{0,23}$/.test(a.handle)) { S.tab = 'teammates'; S.detail = {k: 'agent', i}; renderSheet(); return err(`${a.name || 'Teammate ' + (i + 1)} needs a handle: letters, digits, - or _.`); }
+    if (a.mode === 'spawn' && !a.program) { S.tab = 'teammates'; S.detail = {k: 'agent', i}; renderSheet(); return err(`${a.name} needs a command.`); }
+  }
+  if (new Set(t.agents.map(a => a.handle)).size !== t.agents.length) return err('Two teammates share a handle.');
+  if (t.agents.filter(a => a.role === 'lead').length > 1) return err('Only one lead, please.');
+  for (const r of t.rooms) if (!(await S.D.fs.exists(expand(r.cwd)).catch(() => false))) { S.tab = 'rooms'; S.detail = null; renderSheet(); return err(`${r.cwd} doesn't exist.`); }
+  const ids = new Set(t.providers.map(p => p.id));
+  const secrets = {...S.secrets};
+  for (const [id, v] of Object.entries(S.draftSecrets)) { if (v === null) delete secrets[id]; else secrets[id] = v; }
+  for (const id of Object.keys(secrets)) if (!ids.has(id)) delete secrets[id];
+  try {
+    if (JSON.stringify(secrets) !== JSON.stringify(S.secrets)) await saveSecrets(secrets);
+    S.team = normalizeTeam(clone(t)); await saveTeam();
+  } catch (x) { return err(x.message); }
+  S.humanName = S.team.humanName || S.osName || S.humanName;
+  for (const p of S.team.providers) delete S.keyCache[p.id];
+  closeSettings(); ensureRooms();
+  for (const r of S.rooms.values()) if (r.size < 0) await readRoom(r, true);
+  renderAll(); checkAvail();
+}
+async function saveSecrets(v) {
+  const p = `${S.base}/secrets.json`;
+  await writeJSON(p, v);
+  if (S.platform !== 'win32') await S.D.childProcess.exec(`chmod 600 ${shq(p)}`, {timeout: 5000}).catch(() => {});
+  S.secrets = v;
+}
+async function curlJSON(url, headers) {
+  const cfg = `url = "${url.replace(/["\\]/g, '\\$&')}"\n` + headers.map(h => `header = "${h.replace(/["\\]/g, '\\$&')}"\n`).join('');
+  const r = await S.D.childProcess.exec(`curl -sS -m 12 -w "\\n%{http_code}" -K -`, {timeout: 20000, input: cfg, env: S.env || undefined});
+  if (r.code !== 0) throw new Error(first(r.stderr || 'curl failed', 200));
+  const out = r.stdout || '', i = out.lastIndexOf('\n'), status = +out.slice(i + 1), body = out.slice(0, i);
+  let json = null; try { json = JSON.parse(body); } catch {}
+  return {status, json, body};
+}
+async function testProvider(id) {
+  const t = S.draft || S.team, p = providerBy(id, t), done = (ok, msg) => { S.ptest[id] = {ok, msg}; if (S.sheetOpen) renderSheet(); };
+  S.ptest[id] = {ok: true, msg: 'Testing…'}; if (S.sheetOpen) renderSheet();
+  try {
+    const cp = S.D.childProcess;
+    if (p.kind === 'subscription') {
+      const lines = [];
+      for (const a of t.agents.filter(x => x.provider === 'subscription' && x.enabled && x.mode === 'spawn')) {
+        if (a.kind === 'codex') { const r = await cp.exec(`${shq(a.program)} login status`, {timeout: 15000, env: S.env || undefined}).catch(e => ({code: 1, stderr: e.message})); lines.push(`@${a.handle}: ${first((r.stdout || r.stderr || '').trim() || 'no answer', 90)}`); }
+        else lines.push(`@${a.handle}: ${CLIS[a.kind].login} if it asks`);
+      }
+      return done(true, lines.join('. ') || 'No teammates use subscriptions.');
+    }
+    if (p.kind === 'vertex') {
+      if (!p.project) return done(false, 'Set a project ID first.');
+      const env = {...(S.env || {})}; if (p.credentials) env.GOOGLE_APPLICATION_CREDENTIALS = expand(p.credentials);
+      const r = await cp.exec('gcloud auth application-default print-access-token', {timeout: 20000, env});
+      if (r.code !== 0 || !r.stdout.trim()) return done(false, first(r.stderr || 'gcloud could not get a token. Run gcloud auth application-default login.', 200));
+      return done(true, `gcloud credentials work. Requests go to ${p.project} in ${p.region || 'global'}; model access is checked on the first run.`);
+    }
+    if (p.kind === 'env') return done(true, 'Nothing to test here. Run a teammate and read its log.');
+    const key = await resolveKey(p, S.draftSecrets[p.id]);
+    let url, headers = [];
+    if (p.kind === 'anthropic') { url = 'https://api.anthropic.com/v1/models?limit=100'; headers = ['x-api-key: ' + key, 'anthropic-version: 2023-06-01']; }
+    else if (p.kind === 'openai') { url = 'https://api.openai.com/v1/models'; headers = ['Authorization: Bearer ' + key]; }
+    else if (p.kind === 'litellm') { url = rootUrl(p.baseUrl) + '/v1/models'; if (key) headers = ['Authorization: Bearer ' + key]; }
+    else if (p.protocol === 'anthropic') { url = p.baseUrl.replace(/\/+$/, '') + '/v1/models'; if (key) headers = [p.authHeader === 'x-api-key' ? 'x-api-key: ' + key : 'Authorization: Bearer ' + key, 'anthropic-version: 2023-06-01']; }
+    else if (p.protocol === 'openai') { url = p.baseUrl.replace(/\/+$/, '') + '/models'; if (key) headers = ['Authorization: Bearer ' + key]; }
+    else return done(true, 'No test for Gemini-format gateways yet. Run a teammate and read its log.');
+    const r = await curlJSON(url, headers);
+    if (r.status === 401 || r.status === 403) return done(false, `The key was rejected (${r.status}).`);
+    if (r.status !== 200) return done(false, `HTTP ${r.status || '?'} from ${url}: ${first(r.json?.error?.message || r.body, 140)}`);
+    const models = (r.json?.data || []).map(m => m.id).filter(Boolean);
+    const live = (S.draft || S.team).providers.find(x => x.id === id); if (live) live.models = models.slice(0, 300);
+    const real = S.team.providers.find(x => x.id === id); if (real && S.draft) { real.models = models.slice(0, 300); saveTeam().catch(() => {}); }
+    return done(true, `Connected. ${models.length} model${models.length === 1 ? '' : 's'} available.`);
+  } catch (e) { done(false, e.message); }
+}
+
+/* ---------- desktop runtime ---------- */
+async function readJSON(p) { try { return JSON.parse(await S.D.fs.readFile(p, 'utf8')); } catch { return null; } }
+async function writeJSON(p, v) { const tmp = p + '.tmp'; await S.D.fs.writeFile(tmp, JSON.stringify(v, null, 2) + '\n'); await S.D.fs.rename(tmp, p); }
+async function saveTeam() {
+  const out = clone(S.team); out.agents.forEach(a => delete a.av);
+  await writeJSON(`${S.base}/team.json`, out);
+  S.teamMtime = (await S.D.fs.stat(`${S.base}/team.json`).catch(() => ({}))).mtimeMs || 0;
+}
+let stateTimer = 0;
+function saveState() { clearTimeout(stateTimer); stateTimer = setTimeout(() => writeJSON(`${S.base}/state.json`, {sessions: S.sessions, lastSeen: S.lastSeen}).catch(() => {}), 400); }
+
+function ensureRooms() {
+  for (const r of S.team.rooms) {
+    const have = S.rooms.get(r.id);
+    if (have) { have.name = r.name; have.cwd = r.cwd; have.dm = r.dm; } else S.rooms.set(r.id, {...r, messages: [], ids: new Set(), size: -1, mtime: -1, unread: 0});
+  }
+  for (const id of [...S.rooms.keys()]) if (!S.team.rooms.some(r => r.id === id)) S.rooms.delete(id);
+  if (!S.rooms.has(S.room)) S.room = S.team.rooms[0].id;
+}
+function parseMsg(line) {
+  try {
+    const m = JSON.parse(line);
+    if (!m || typeof m.id !== 'string' || typeof m.text !== 'string') return null;
+    return {id: m.id.slice(0, 80), ts: Number(m.ts) || 0, from: String(m.from || 'human').toLowerCase().slice(0, 40),
+      kind: ['human', 'agent', 'system'].includes(m.kind) ? m.kind : (m.from && m.from !== 'human' ? 'agent' : 'human'),
+      text: m.text, hop: Number(m.hop) || 0, replyTo: m.replyTo ? String(m.replyTo) : '', run: m.run ? String(m.run).slice(0, 40) : '',
+      via: m.via ? String(m.via).slice(0, 80) : '', chain: m.chain ? String(m.chain).slice(0, 80) : '', action: m.action === 'continue' ? 'continue' : '', ref: m.ref ? String(m.ref) : ''};
+  } catch { return null; }
+}
+async function readRoom(room, seed) {
+  const p = roomPath(room.id);
+  let st = await S.D.fs.stat(p).catch(() => null);
+  if (!st) { await S.D.fs.writeFile(p, ''); st = await S.D.fs.stat(p); }
+  if (!seed && st.size === room.size && st.mtimeMs === room.mtime) return;
+  let txt;
+  try { txt = await S.D.fs.readFile(p, 'utf8'); } catch (e) { banner(`Can't read #${room.name}: ${e.message}`); return; }
+  room.size = st.size; room.mtime = st.mtimeMs;
+  const msgs = txt.split('\n').map(parseMsg).filter(Boolean);
+  const ids = new Set(msgs.map(m => m.id));
+  const pending = room.messages.filter(m => m._local && !ids.has(m.id));
+  const fresh = msgs.filter(m => !room.ids.has(m.id));
+  room.messages = msgs.concat(pending); room.ids = new Set(room.messages.map(m => m.id));
+  if (seed) { msgs.forEach(m => S.routed.add(m.id)); return; }
+  for (const m of fresh) {
+    if (S.routed.has(m.id)) continue;
+    if (m.kind !== 'system') { bumpUnread(room, m); route(m, room); }
+    else S.routed.add(m.id);
+  }
+  if (fresh.length) { renderRail(); if (room.id === S.room) renderFeed(); }
+}
+async function post(room, m, quiet) {
+  m = {id: uid(), ts: Date.now(), hop: 0, ...m};
+  const disk = {id: m.id, ts: m.ts, from: m.from, kind: m.kind, text: m.text, hop: m.hop};
+  for (const k of ['replyTo', 'run', 'via', 'chain', 'action', 'ref']) if (m[k]) disk[k] = m[k];
+  S.routed.add(m.id); room.ids.add(m.id); room.messages.push({...disk, _local: true});
+  if (room.id === S.room && !quiet) renderFeed();
+  if (S.mode === 'live') await S.D.fs.appendFile(roomPath(room.id), JSON.stringify(disk) + '\n').catch(e => banner(`Couldn't write to #${room.name}: ${e.message}`));
+  return disk;
+}
+const sys = (room, text, extra = {}) => post(room, {from: 'system', kind: 'system', text, ...extra});
+
+function mentions(text) {
+  const out = [];
+  for (const m of String(text).replace(/```[\s\S]*?```/g, ' ').matchAll(/(^|[^\w@./])@([a-z0-9][\w-]*)(?![\w-]|['’]s\b)/gi)) { const a = agentBy(m[2]); if (a && !out.includes(a.handle)) out.push(a.handle); }
+  return out;
+}
+function route(m, room, force) {
+  if (!force && S.routed.has(m.id) && !m._fresh) return;
+  S.routed.add(m.id);
+  if (S.mode !== 'live' || m.kind === 'system') return;
+  let targets = mentions(m.text);
+  if (m.kind === 'human') { if (!targets.length && room.dm && agentBy(room.dm)?.enabled) targets = [room.dm]; if (!targets.length) { const L = lead(); if (L) targets = [L.handle]; else return sys(room, 'No lead is set, so an untagged message wakes nobody. Pick a lead in Settings, or @mention someone.'); } }
+  else {
+    targets = targets.filter(h => h !== m.from);
+    const L = lead();
+    if (!targets.length && S.team.reviewByLead && L && m.from !== L.handle && m.replyTo === L.handle) targets = [L.handle];
+    if (targets.length && !force && m.hop >= S.team.maxHops) return sys(room, `Loop guard: paused after ${m.hop} handoffs. ${targets.map(t => '@' + t).join(', ')} not woken.`, {action: 'continue', ref: m.id, chain: m.chain || m.id});
+  }
+  for (const h of targets) {
+    const a = agentBy(h);
+    if (!a || a.mode === 'external') continue;
+    if (!a.enabled) { sys(room, `@${a.handle} is off the team right now. Turn it on in Settings to wake it.`); continue; }
+    enqueue(a, room, {id: m.id, from: m.kind === 'human' ? 'human' : m.from, hop: force ? 0 : m.hop, chain: m.chain || m.id});
+  }
+}
+function enqueue(a, room, trig) {
+  const key = a.handle + '|' + room.id;
+  const q = S.queues.get(key) || []; S.queues.set(key, q);
+  const job = q.find(j => !j.started);
+  if (job) { job.triggers.push(trig); job.hop = Math.max(job.hop, trig.hop); }
+  else q.push({id: uid(), agent: a.handle, room: room.id, triggers: [trig], hop: trig.hop});
+  pump(); renderRail(); if (room.id === S.room) renderFeed();
+}
+function pump() {
+  if (S.paused) return;
+  let running = [...S.runs.values()].filter(r => r.status === 'running').length;
+  for (const [key, q] of S.queues) {
+    if (running >= S.team.maxRuns) break;
+    if (q.some(j => j.started)) continue;
+    const job = q[0]; if (!job) continue;
+    job.started = true; running++;
+    runJob(job).catch(e => console.error(e)).finally(() => { q.splice(q.indexOf(job), 1); if (!q.length) S.queues.delete(key); pump(); renderRail(); renderHeader(); if (job.room === S.room) renderFeed(); setTray(); setMenu(); });
+  }
+}
+
+function buildPrompt(a, room, job, resumed) {
+  const L = lead(), me = S.humanName;
+  const since = resumed ? (S.lastSeen[room.id]?.[a.handle] || 0) : 0;
+  let msgs = room.messages.filter(m => m.kind !== 'system' && m.ts > since && !(resumed && m.from === a.handle));
+  msgs = msgs.slice(resumed ? -60 : -30);
+  const line = m => `--- ${hm(m.ts)} · ${m.kind === 'human' ? me : '@' + m.from + (agentBy(m.from) ? ' (' + agentBy(m.from).name + ')' : '')}\n${m.text.length > 8000 ? m.text.slice(0, 8000) + '\n[cut at 8000 characters]' : m.text}`;
+  const woke = job.triggers.map(t => t.from === 'human' ? me : '@' + t.from);
+  const team = agents().filter(x => x.enabled).map(x => `- @${x.handle}: ${x.name}${x.role === 'lead' ? ' (lead)' : ''}${x.handle === a.handle ? ' (you)' : ''}`).join('\n');
+  const roleText = a.role === 'lead'
+    ? `You lead this room. Answer ${me} directly when you can. When there is real work, split it into concrete scopes and hand each to an available teammate by @mentioning them with a self-contained brief: what to do, where, and what "done" looks like. Review what comes back${S.team.reviewByLead ? ' (you are woken automatically when a teammate you assigned reports back)' : ''} and integrate it. Say plainly what is finished and what is not.`
+    : `When you finish work someone handed you, report what you changed, how you checked it, and anything left open.${L && L.handle !== a.handle ? ` @${L.handle} reviews it.` : ''}`;
+  const where = room.dm ? `a direct message with ${me}, part of a small team: ${me} (the human) and AI teammates` : `the #${room.name} channel of a small team: ${me} (the human) and AI teammates`;
+  return `You are @${a.handle} (${a.name}) in ${where}.
+Team:
+${team}
+Working directory: ${tilde(expand(a.cwd || room.cwd))}
+
+How the room works:
+- Your final reply is posted to the room as you, word for word. Keep it to what the room needs: results, decisions, questions, blockers.
+- An @mention wakes that teammate and starts them on a run. Only mention someone when you need them to act, and never mention yourself. To refer to a teammate without waking them, write their name without the @.
+- Teammates see the room, not your private context, so put everything they need in the message.
+${roleText}
+
+${resumed ? 'New in the room since your last turn' : 'Recent messages in the room'} (oldest first):
+${msgs.map(line).join('\n\n') || '(nothing yet)'}
+
+You were woken by ${[...new Set(woke)].join(', ')}.`;
+}
+function injectArgs(a, args, extra) {
+  const i = args.indexOf('{provider_args}');
+  if (i >= 0) return [...args.slice(0, i), ...extra, ...args.slice(i + 1)];
+  if (!extra.length) return args;
+  if (a.kind === 'codex') { const e = args.indexOf('exec'); if (e >= 0) return [...args.slice(0, e + 1), ...extra, ...args.slice(e + 1)]; }
+  if (args[args.length - 1] === '-') return [...args.slice(0, -1), ...extra, '-'];
+  return [...args, ...extra];
+}
+function spawnProc(a, args, cwd, wire, key) {
+  const cp = S.D.childProcess, set = {};
+  for (const [k, v] of Object.entries(wire.set)) set[k] = v.replaceAll(KEY, key);
+  if (S.env) {
+    const env = {...S.env}; for (const k of wire.unset) delete env[k]; Object.assign(env, set);
+    if (S.platform === 'win32') return cp.spawn(a.program, args.map(winq), {cwd, shell: true, env});
+    return cp.spawn('/usr/bin/env', [a.program, ...args], {cwd, env});
+  }
+  if (S.platform === 'win32') return cp.spawn(a.program, args.map(winq), {cwd, shell: true});
+  const unset = wire.unset.filter(k => /^[A-Z_][A-Z0-9_]*$/.test(k));
+  return cp.spawn(S.shell, ['-lc', (unset.length ? `unset ${unset.join(' ')}; ` : '') + 'exec "$0" "$@"', a.program, ...args],
+    {cwd, env: {HOME: S.home, USER: S.osName || '', SHELL: S.shell, PATH: '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin', ...set}});
+}
+function ev(run, k, x) {
+  run.events.push({t: Date.now(), k, x: String(x ?? '')});
+  if (run.events.length > 3000) run.events.splice(0, 500);
+  if (S.pane === 'runs' && S.logRun === run.id) { const box = $('#evs'); if (box) box.insertAdjacentHTML('beforeend', evHTML(run.events[run.events.length - 1])); }
+}
+function act(run, x) {
+  run.activity = first(x, 200);
+  for (const n of document.querySelectorAll(`[data-run="${CSS.escape(run.id)}"] .act`)) n.textContent = run.activity;
+  officeSync();
+  const sn = document.querySelector(`.strip[data-h="${CSS.escape(run.agent)}"] .act`); if (sn) sn.textContent = run.activity + (run.room !== S.room ? ` in #${S.rooms.get(run.room)?.name || run.room}` : '');
+}
+function toolDesc(name, i = {}) {
+  const t = v => tilde(String(v ?? ''));
+  switch (name) {
+    case 'Bash': return '$ ' + first(i.command, 160);
+    case 'Read': return 'read ' + t(i.file_path);
+    case 'Edit': case 'MultiEdit': case 'Write': case 'NotebookEdit': return 'edit ' + t(i.file_path || i.notebook_path);
+    case 'Grep': return 'grep ' + first(i.pattern, 80);
+    case 'Glob': return 'glob ' + first(i.pattern, 80);
+    case 'WebFetch': return 'fetch ' + first(i.url, 120);
+    case 'WebSearch': return 'search ' + first(i.query, 120);
+    case 'Task': case 'Agent': return 'subagent ' + first(i.description || i.prompt, 100);
+    case 'TodoWrite': return 'updating todos';
+    default: return name + ' ' + first(JSON.stringify(i), 100);
+  }
+}
+function onLine(a, run, line) {
+  line = line.trim(); if (!line) return;
+  if (a.format === 'text') { run.text += line + '\n'; act(run, line); ev(run, 'out', first(line, 600)); return; }
+  if (a.format === 'gemini') { run.raw += line + '\n'; act(run, 'working'); return; }
+  let e; try { e = JSON.parse(line); } catch { ev(run, 'out', first(line, 600)); return; }
+  if (a.format === 'claude') {
+    if (e.type === 'system' && e.session_id) { run.session = e.session_id; ev(run, 'session', e.session_id + (e.model ? ' · ' + e.model : '')); }
+    else if (e.type === 'assistant') for (const c of e.message?.content || []) {
+      if (c.type === 'text' && c.text?.trim()) { run.last = c.text; act(run, 'writing: ' + c.text); ev(run, 'text', c.text.slice(0, 4000)); }
+      else if (c.type === 'tool_use') { const d = toolDesc(c.name, c.input); act(run, d); ev(run, 'tool', d); }
+    }
+    else if (e.type === 'user') for (const c of e.message?.content || []) { if (c.type === 'tool_result' && c.is_error) ev(run, 'error', first(typeof c.content === 'string' ? c.content : JSON.stringify(c.content), 400)); }
+    else if (e.type === 'result') {
+      if (e.session_id) run.session = e.session_id;
+      run.cost = e.total_cost_usd ?? null;
+      if (e.is_error) run.err = typeof e.result === 'string' && e.result ? e.result : (e.subtype || 'error');
+      else run.text = typeof e.result === 'string' ? e.result : (run.last || '');
+      ev(run, 'result', `${e.subtype || ''}${e.num_turns != null ? ' · ' + e.num_turns + ' turns' : ''}${e.total_cost_usd != null ? ' · $' + Number(e.total_cost_usd).toFixed(3) : ''}`);
+    }
+    return;
+  }
+  const it = e.item || {};
+  switch (e.type) {
+    case 'thread.started': run.session = e.thread_id; ev(run, 'session', e.thread_id); break;
+    case 'item.started': case 'item.updated': case 'item.completed':
+      if (it.type === 'agent_message' && e.type === 'item.completed') { run.text = it.text || ''; act(run, 'writing: ' + run.text); ev(run, 'text', run.text.slice(0, 4000)); }
+      else if (it.type === 'command_execution') { const d = '$ ' + first(it.command, 160); act(run, d); if (e.type === 'item.completed') ev(run, 'cmd', d + (it.exit_code != null ? ` (exit ${it.exit_code})` : '')); }
+      else if (it.type === 'file_change') { const d = 'edit ' + (it.changes || []).map(c => tilde(c.path)).join(', '); act(run, d); if (e.type === 'item.completed') ev(run, 'edit', d); }
+      else if (it.type === 'reasoning') act(run, 'thinking');
+      else if (it.type === 'mcp_tool_call') { const d = `${it.server || 'mcp'}.${it.tool || ''}`; act(run, d); if (e.type === 'item.completed') ev(run, 'tool', d); }
+      else if (it.type === 'web_search') { const d = 'search ' + first(it.query, 120); act(run, d); if (e.type === 'item.completed') ev(run, 'tool', d); }
+      else if (it.type === 'error') ev(run, 'error', it.message);
+      break;
+    case 'turn.completed': run.usage = e.usage; ev(run, 'turn', `${e.usage?.input_tokens ?? '?'} in · ${e.usage?.output_tokens ?? '?'} out`); break;
+    case 'turn.failed': run.err = e.error?.message || 'turn failed'; ev(run, 'error', run.err); break;
+    case 'error': run.err = e.message || 'error'; ev(run, 'error', run.err); break;
+  }
+}
+function finishGemini(run) {
+  if (!run.raw.trim()) return;
+  try {
+    const j = JSON.parse(run.raw.slice(run.raw.indexOf('{')));
+    if (j.error) run.err = j.error.message || JSON.stringify(j.error);
+    if (typeof j.response === 'string') run.text = j.response;
+    if (j.stats) ev(run, 'result', first(JSON.stringify(j.stats), 300));
+  } catch { run.text = run.raw; }
+}
+function execRun(a, args, cwd, prompt, run, wire, key) {
+  return new Promise(resolve => {
+    let child, buf = '', done = false;
+    const fin = code => { if (done) return; done = true; if (buf.trim()) onLine(a, run, buf); if (a.format === 'gemini') finishGemini(run); resolve(code); };
+    try { child = spawnProc(a, args, cwd, wire, key); } catch (e) { run.err = e.message; return resolve(-1); }
+    run.child = child;
+    child.stdout.on('data', ch => { buf += ch; let i; while ((i = buf.indexOf('\n')) >= 0) { const l = buf.slice(0, i); buf = buf.slice(i + 1); onLine(a, run, l); } });
+    child.stderr.on('data', ch => { const s = key ? String(ch).replaceAll(key, '••••') : String(ch); run.stderr = (run.stderr + s).slice(-8000); const l = s.trim(); if (l) ev(run, 'stderr', first(l, 400)); });
+    child.on('error', e => { run.err = run.err || e.message; ev(run, 'error', e.message); setTimeout(() => fin(-1), 400); });
+    child.on('close', code => fin(code));
+    child.on('exit', code => setTimeout(() => fin(code), 1500));
+    if (a.stdin) child.stdin.write(prompt).then(() => child.stdin.end()).catch(() => {});
+    else child.stdin.end().catch(() => {});
+  });
+}
+async function runJob(job) {
+  const a = agentBy(job.agent), room = S.rooms.get(job.room);
+  if (!a || !room) return;
+  const prov = providerBy(a.provider), sig = `${prov.id}|${a.model}`;
+  const so = S.sessions[room.id]?.[a.handle], sess = typeof so === 'string' ? so : so?.sig === sig ? so.id : null;
+  const resumed = !!(sess && a.resumeArgs.length);
+  const run = {id: uid(), agent: a.handle, room: room.id, status: 'running', started: Date.now(), events: [], activity: 'starting', text: '', last: '', raw: '', err: '', stderr: '',
+    session: null, cost: null, usage: null, hop: job.hop, replyTo: job.triggers[job.triggers.length - 1].from, code: null, via: viaLabel(a), chain: job.triggers[job.triggers.length - 1].chain || job.triggers[0].id};
+  S.runs.set(run.id, run);
+  const cwd = expand(a.cwd || room.cwd);
+  const dir = `${S.base}/runs/${run.id}`;
+  run.prompt = buildPrompt(a, room, job, resumed);
+  const seenTs = Math.max(0, ...room.messages.map(m => m.ts));
+  renderHeader(); renderRail(); if (room.id === S.room) renderFeed(); setTray(); setMenu();
+  const wire = plan(a, prov);
+  let key = '', args = [];
+  if (!wire.ok) run.err = wire.why;
+  else {
+    try { key = wire.set && Object.values(wire.set).some(v => v.includes(KEY)) ? await resolveKey(prov) : ''; } catch (e) { run.err = e.message; }
+    args = injectArgs(a, (resumed ? a.resumeArgs : a.args).map(x => x.replaceAll('{session}', sess || '').replaceAll('{prompt_file}', dir + '/prompt.md').replaceAll('{room}', room.id).replaceAll('{cwd}', cwd)), wire.args);
+    run.cmdline = [a.program, ...args].map(x => /[\s'"]/.test(x) ? shq(x) : x).join(' ') + `\n(in ${tilde(cwd)})` +
+      `\nprovider: ${prov.name}` + (Object.keys(wire.set).length ? `\nset: ${Object.entries(wire.set).map(([k, v]) => k + '=' + (v.includes(KEY) ? '••••' : v)).join(' ')}` : '') + (wire.unset.length ? `\nhidden: ${wire.unset.join(' ')}` : '');
+  }
+  ev(run, 'start', `${resumed ? 'resuming ' + sess : 'new session'} in ${tilde(cwd)} via ${prov.name}`);
+  try { await S.D.fs.mkdir(dir, {recursive: true}); await S.D.fs.writeFile(dir + '/prompt.md', run.prompt); } catch (e) { ev(run, 'error', 'could not write prompt file: ' + e.message); }
+  if (run.err) run.code = -1;
+  else if (!(await S.D.fs.exists(cwd).catch(() => false))) { run.err = `the folder ${tilde(cwd)} doesn't exist`; run.code = -1; }
+  else run.code = await execRun(a, args, cwd, run.prompt, run, wire, key);
+  delete run.child;
+  if (key) { run.text = run.text.replaceAll(key, '••••'); for (const e of run.events) e.x = e.x.replaceAll(key, '••••'); }
+  const text = (run.text || '').trim();
+  const ok = !run.stopping && !!text && (run.code === 0 || (a.format !== 'text' && !run.err));
+  if (!ok && !run.stopping && resumed && !text && !job.retried && wire.ok) {
+    job.retried = true; run.status = 'failed'; run.ended = Date.now();
+    ev(run, 'note', 'resume failed, starting a fresh session');
+    delete S.sessions[room.id][a.handle]; saveState(); persistRun(run);
+    return runJob(job);
+  }
+  run.status = ok ? 'done' : run.stopping ? 'stopped' : 'failed'; run.ended = Date.now();
+  if (run.session && a.resumeArgs.length) (S.sessions[room.id] ||= {})[a.handle] = {id: run.session, sig};
+  if (ok) {
+    (S.lastSeen[room.id] ||= {})[a.handle] = seenTs;
+    saveState();
+    const m = await post(room, {from: a.handle, kind: 'agent', text, hop: job.hop + 1, replyTo: run.replyTo, run: run.id, via: run.via, chain: run.chain}, true);
+    bumpUnread(room, m); notify(a, text);
+    route({...m, _fresh: true}, room);
+    if (room.id === S.room) renderFeed();
+  } else if (run.stopping) await sys(room, `Stopped @${a.handle}.`, {run: run.id, chain: run.chain});
+  else {
+    let why = run.err || '';
+    if (!wire.ok) why = wire.why;
+    else if (run.code === 127 || /No such file or directory|command not found|ENOENT/i.test(run.stderr + why)) why = why && !/ENOENT/.test(why) ? why : `couldn't start \`${a.program}\`. Check the command in Settings.`;
+    if (!why) why = run.code ? `exited with code ${run.code}: ${first(run.stderr.trim().split('\n').pop() || '', 160)}` : 'finished without a reply';
+    await sys(room, `@${a.handle} didn't finish: ${first(why, 260)}`, {run: run.id, chain: run.chain});
+    if (!document.hasFocus()) notify(a, `didn't finish: ${why}`);
+  }
+  persistRun(run);
+  if (S.logRun === run.id && S.pane === 'runs') renderLog();
+  officeSync();
+}
+function persistRun(run) {
+  const dir = `${S.base}/runs/${run.id}`;
+  const meta = {id: run.id, agent: run.agent, room: run.room, status: run.status, started: run.started, ended: run.ended, code: run.code, session: run.session, cost: run.cost, usage: run.usage, err: run.err, cmdline: run.cmdline, via: run.via};
+  writeJSON(dir + '/run.json', meta).catch(() => {});
+  S.D.fs.writeFile(dir + '/events.jsonl', run.events.map(e => JSON.stringify(e)).join('\n') + '\n').catch(() => {});
+  if (run.stderr) S.D.fs.writeFile(dir + '/stderr.txt', run.stderr).catch(() => {});
+}
+async function loadRun(id) {
+  if (S.runs.has(id) || S.mode !== 'live' || !/^[a-z0-9]+$/.test(id)) return;
+  const dir = `${S.base}/runs/${id}`, meta = await readJSON(dir + '/run.json');
+  if (!meta) return;
+  const evs = (await S.D.fs.readFile(dir + '/events.jsonl', 'utf8').catch(() => '')).split('\n').map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  S.runs.set(id, {...meta, id, events: evs, prompt: await S.D.fs.readFile(dir + '/prompt.md', 'utf8').catch(() => ''), stderr: await S.D.fs.readFile(dir + '/stderr.txt', 'utf8').catch(() => ''), activity: ''});
+}
+
+function bumpUnread(room, m) {
+  if (room.id !== S.room || !document.hasFocus()) { room.unread = (room.unread || 0) + 1; renderRail(); badge(); }
+}
+function badge() { const n = [...S.rooms.values()].reduce((s, r) => s + (r.unread || 0), 0); S.D?.app?.dock.setBadge(n ? String(n) : '').catch(() => {}); }
+function notify(a, text) {
+  if (S.mode !== 'live' || !S.team.notify || document.hasFocus()) return;
+  S.D.notification?.show({body: first(`${a.name}: ${text}`, 290)}).catch(() => {});
+}
+let trayTimer = 0;
+function setTray() {
+  if (S.mode !== 'live' || S.trayOff || !S.D.tray) return;
+  clearTimeout(trayTimer);
+  trayTimer = setTimeout(() => {
+    const running = [...S.runs.values()].filter(r => r.status === 'running');
+    const menu = [{label: S.paused ? 'Paused' : running.length ? `${running.length} running` : 'All quiet', enabled: false},
+      ...running.map(r => ({label: `@${r.agent} in #${S.rooms.get(r.room)?.name || r.room}`, enabled: false})),
+      {type: 'separator'}, {label: 'Show Agent Team', click: () => S.D.window.show().catch(() => {})},
+      {label: 'Show Office', click: () => { S.D.window.show().catch(() => {}); if (S.pane !== 'office') setPane('office'); }},
+      {label: 'Settings…', click: () => openSettings()},
+      {label: 'Pause new runs', type: 'checkbox', checked: S.paused, click: togglePause},
+      ...(running.length ? [{label: 'Stop all runs', click: stopAll}] : [])];
+    S.D.tray.set({icon: trayIcon(), title: running.length ? String(running.length) : '', toolTip: running.length ? `${running.length} agents working` : 'All quiet', menu})
+      .catch(e => { if (/EPERM|ENOSYS|unavailable/i.test(e.message)) S.trayOff = true; });
+  }, 150);
+}
+let menuTimer = 0, menuComma = true;
+function setMenu() {
+  if (S.mode !== 'live' || S.platform !== 'darwin' || !S.D.Menu?.setApplicationMenu) return;
+  clearTimeout(menuTimer);
+  menuTimer = setTimeout(() => {
+    const running = [...S.runs.values()].some(r => r.status === 'running');
+    const rooms = [...S.rooms.values()];
+    const tpl = [{role: 'editMenu'},
+      {label: 'Channel', submenu: [
+        {label: 'New Channel…', accelerator: 'CmdOrCtrl+N', click: () => { S.view = 'home'; renderSidebar(); showNewRoom(true); }},
+        {type: 'separator'},
+        ...rooms.map((r, i) => ({label: (r.dm ? '' : '# ') + r.name, type: 'radio', checked: r.id === S.room, ...(i < 9 ? {accelerator: 'CmdOrCtrl+' + (i + 1)} : {}), click: () => switchRoom(r.id)})),
+        {type: 'separator'},
+        {label: 'Pause New Runs', type: 'checkbox', checked: S.paused, accelerator: 'CmdOrCtrl+Shift+P', click: togglePause},
+        {label: 'Stop All Runs', enabled: running, click: stopAll},
+        {label: 'Open Channel Folder', click: () => S.D.shell.openPath(expand(cur().cwd)).catch(() => {})}]},
+      {label: 'View', submenu: [
+        {label: 'Office', type: 'checkbox', checked: S.pane === 'office', accelerator: 'CmdOrCtrl+Shift+O', click: () => setPane('office')},
+        {label: 'Runs', type: 'checkbox', checked: S.pane === 'runs', accelerator: 'CmdOrCtrl+L', click: () => setPane('runs')},
+        {label: 'Expand Office', type: 'checkbox', checked: !!S.officeFull, enabled: S.pane === 'office', click: () => { S.officeFull = !S.officeFull; renderPane(); }},
+        {type: 'separator'},
+        {label: 'Search', accelerator: 'CmdOrCtrl+K', click: () => $('#q').focus()}]},
+      {label: 'Settings', submenu: [
+        {label: 'Settings…', ...(menuComma ? {accelerator: 'CmdOrCtrl+,'} : {}), click: () => openSettings()},
+        {type: 'separator'},
+        {label: 'Teammates', click: () => openSettings('teammates')},
+        {label: 'Providers', click: () => openSettings('providers')},
+        {label: 'Channels', click: () => openSettings('rooms')},
+        {label: 'General', click: () => openSettings('general')},
+        {type: 'separator'},
+        {label: 'Open Data Folder', click: () => S.D.shell.openPath(S.base).catch(() => {})}]}];
+    S.D.Menu.setApplicationMenu(tpl).catch(e => { if (menuComma && /EINVAL/.test(e.message)) { menuComma = false; setMenu(); } });
+  }, 120);
+}
+function togglePause() {
+  S.paused = !S.paused; renderHeader(); renderSidebar(); renderFeed(); setTray(); setMenu();
+  if (!S.paused) pump();
+}
+function stopRun(id) { const r = S.runs.get(id); if (r?.child && !r.stopping) { r.stopping = true; r.child.kill('SIGTERM').catch(() => {}); renderFeed(); setTimeout(() => r.child?.kill('SIGKILL').catch(() => {}), 6000); } }
+function stopAll() { for (const r of S.runs.values()) if (r.status === 'running') stopRun(r.id); }
+function switchRoom(id) { if (!S.rooms.has(id)) return; S.room = id; const r = cur(); r.unread = 0; badge(); S.logRun = null; renderAll(); $('#scroll').scrollTop = 1e9; }
+function showNewRoom(on) {
+  S.newRoom = on ?? !S.newRoom;
+  const slot = $('#nrslot'); if (!slot) return;
+  slot.innerHTML = S.newRoom ? `<form class="nr" id="nrform"><input class="field" name="name" placeholder="Channel name" required><input class="field mono" name="cwd" value="~/" aria-label="Folder agents work in"><div class="actions" style="margin:0"><button class="btn primary">Create</button><button type="button" class="btn" onclick="this.closest('form').remove()">Cancel</button></div><p class="err" id="nrerr" style="margin:0"></p></form>` : '';
+  slot.querySelector('input')?.focus();
+}
+
+async function captureEnv() {
+  const cp = S.D.childProcess;
+  if (S.platform === 'win32') {
+    try { const r = await cp.exec('set', {timeout: 8000}); const env = {}; for (const ln of (r.stdout || '').split(/\r?\n/)) { const i = ln.indexOf('='); if (i > 0) env[ln.slice(0, i)] = ln.slice(i + 1); } return env.Path || env.PATH ? env : null; } catch { return null; }
+  }
+  try { const r = await cp.exec('printf %s "$SHELL"', {timeout: 4000}); S.shell = (r.stdout || '').trim() || S.shell; } catch {}
+  if (S.platform !== 'darwin' && S.shell === '/bin/zsh') S.shell = '/bin/bash';
+  try {
+    const r = await cp.exec(`${shq(S.shell)} -ilc 'printf "\\n__AT_ENV__\\n"; env; printf "\\n__AT_END__\\n"'`, {timeout: 15000, input: ''});
+    const out = r.stdout || '', i = out.indexOf('__AT_ENV__'), j = out.lastIndexOf('__AT_END__');
+    if (i < 0 || j < i) return null;
+    const env = {}; let k = null;
+    for (const ln of out.slice(i + 10, j).split('\n')) { const m = /^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/.exec(ln); if (m) { k = m[1]; env[k] = m[2]; } else if (k && ln) env[k] += '\n' + ln; }
+    for (const x of Object.keys(env)) if (/^(PWD|OLDPWD|SHLVL|_|CLAUDECODE|CLAUDE_CODE_ENTRYPOINT|CLAUDE_CODE_SSE_PORT)$|^ELECTRON_/.test(x)) delete env[x];
+    return env.PATH ? env : null;
+  } catch { return null; }
+}
+async function checkAvail() {
+  const cp = S.D.childProcess;
+  await Promise.all(agents().map(async a => {
+    if (a.mode !== 'spawn') return;
+    try {
+      const r = S.platform === 'win32' ? await cp.exec(`where ${winq(a.program)}`, {timeout: 6000, env: S.env || undefined})
+        : S.env ? await cp.exec(`command -v ${shq(a.program)}`, {timeout: 6000, env: S.env})
+        : await cp.exec(`${shq(S.shell)} -lc ${shq('command -v ' + shq(a.program))}`, {timeout: 9000});
+      S.avail[a.handle] = r.code === 0 && r.stdout.trim() ? r.stdout.trim().split('\n')[0] : false;
+    } catch { S.avail[a.handle] = false; }
+  }));
+  renderRail(); if (S.sheetOpen && S.tab === 'teammates') renderSheet();
+}
+
+async function poll() {
+  if (S.polling) return; S.polling = true;
+  try {
+    const st = await S.D.fs.stat(`${S.base}/team.json`).catch(() => null);
+    if (st && st.mtimeMs !== S.teamMtime) {
+      S.teamMtime = st.mtimeMs;
+      const t = await readJSON(`${S.base}/team.json`);
+      if (t) { S.team = normalizeTeam(t); ensureRooms(); for (const r of S.rooms.values()) if (r.size < 0) await readRoom(r, true); renderAll(); checkAvail(); }
+    }
+    for (const r of S.rooms.values()) await readRoom(r, false);
+  } catch (e) { console.error(e); }
+  S.polling = false;
+}
+
+/* ---------- icons ---------- */
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function drawIcon() {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+  const grad = g.createLinearGradient(0, 24, 0, 232); grad.addColorStop(0, '#ffffff'); grad.addColorStop(1, '#e9e9ee');
+  g.shadowColor = 'rgba(0,0,0,.25)'; g.shadowBlur = 10; g.shadowOffsetY = 4;
+  rr(g, 24, 24, 208, 208, 46); g.fillStyle = grad; g.fill(); g.shadowColor = 'transparent';
+  const bot = (x, y, r, col, shape) => {
+    g.fillStyle = 'rgba(0,0,0,.12)'; g.beginPath(); g.ellipse(x, y + r + 8, r * .8, 6, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = col; g.beginPath();
+    if (shape === 0) g.arc(x, y, r, 0, Math.PI * 2); else if (shape === 1) rr(g, x - r * .62, y - r * 1.1, r * 1.24, r * 2.2, r * .62); else rr(g, x - r * .9, y - r * .9, r * 1.8, r * 1.8, r * .45);
+    g.fill(); g.fillStyle = '#111'; for (const s of [-1, 1]) { g.beginPath(); g.arc(x + s * r * .28, y - r * .15, r * .13, 0, Math.PI * 2); g.fill(); }
+  };
+  bot(86, 142, 30, '#c2410c', 0); bot(170, 142, 30, '#16181f', 1); bot(128, 108, 28, '#0e8c7e', 2);
+  return c.toDataURL('image/png');
+}
+let TRAY = '';
+function trayIcon() {
+  if (TRAY) return TRAY;
+  const c = document.createElement('canvas'); c.width = c.height = 36; const g = c.getContext('2d'); g.fillStyle = '#000';
+  g.beginPath(); g.arc(11, 20, 7, 0, Math.PI * 2); g.fill(); rr(g, 19, 11, 12, 16, 6); g.fill();
+  g.globalCompositeOperation = 'destination-out';
+  for (const [x, y] of [[9, 19], [13, 19], [23, 17], [27, 17]]) { g.beginPath(); g.arc(x, y, 1.4, 0, Math.PI * 2); g.fill(); }
+  return (TRAY = c.toDataURL('image/png'));
+}
+
+/* ---------- boot ---------- */
+function banner(html, isHTML) { const b = $('#banner'); if (isHTML) b.innerHTML = html; else b.textContent = html; b.classList.add('show'); }
+function sample() {
+  const t0 = Date.now() - 22 * 60000, room = {id: 'general', name: 'general', cwd: '~/code/shop', messages: [], ids: new Set(), unread: 0};
+  const M = (min, from, kind, text, chain, extra = {}) => room.messages.push({id: 's' + min, ts: t0 + min * 60000, from, kind, text, hop: 0, chain, ...extra});
+  M(0, 'human', 'human', '@claude checkout tests have been flaky on CI all week. Can someone figure out why before I merge the pricing branch?', 's0');
+  M(1, 'claude', 'agent', 'On it. Every failure in the last five CI runs is `test_apply_coupon` timing out, and only right after `test_refund`.\n\n@codex reproduce with `pytest tests/checkout -p no:randomly -x` in that order and fix whatever `test_refund` leaves behind, in the fixture. Done when the pair passes 20 times in a row.', 's0', {run: 'x1', via: 'Subscriptions'});
+  M(9, 'codex', 'agent', 'Reproduced on the third run. `test_refund` patches `time.time` and never undoes it, so the coupon expiry check never passes.\n\nChanged `tests/conftest.py`: `payment_stub` now patches through `monkeypatch`. The pair passed 20 times in a row; full suite is 412 passed.', 's0', {run: 'x2', via: 'LiteLLM, gpt-6-luna'});
+  M(10, 'claude', 'agent', '@muse quick check: any other fixture patching `time.time` the same way? Report only.', 's0', {run: 'x3', via: 'Subscriptions'});
+  M(12, 'muse', 'agent', 'Only one more: `tests/billing/conftest.py` line 41, same pattern. Nothing else in `tests/`.', 's0', {run: 'x5', via: 'Subscriptions'});
+  M(13, 'claude', 'agent', 'Done. The flaky checkout tests came from `payment_stub` freezing the clock and never restoring it. Codex fixed it in the fixture (20/20 green, full suite 412 passed). Muse found the same pattern in `tests/billing/conftest.py`; I left that for you to decide since billing is your branch.\n\nSafe to merge pricing.', 's0', {run: 'x6', via: 'Subscriptions'});
+  M(18, 'human', 'human', '@claude while you\'re in there, why are staging deploys so slow lately?', 's18');
+  M(19, 'claude', 'agent', 'Looking. @codex pull the last 20 staging deploy logs and time each step; I want to know which step grew.', 's18', {run: 'x7', via: 'Subscriptions'});
+  S.rooms.set('general', room); S.rooms.set('counterpart', {id: 'counterpart', name: 'counterpart', cwd: '~', messages: [], ids: new Set(), unread: 3});
+  S.rooms.set('rondo', {id: 'rondo', name: 'rondo', cwd: '~', messages: [], ids: new Set(), unread: 0});
+  S.team.providers = [{id: 'litellm', kind: 'litellm', name: 'LiteLLM', baseUrl: 'http://localhost:4000', keySource: 'env', keyEnv: 'LITELLM_API_KEY', models: ['claude-sonnet-5', 'gpt-6-luna', 'gemini-2.5-pro']},
+    {id: 'vertex', kind: 'vertex', name: 'Vertex AI', project: 'my-gcp-project', region: 'global', credentials: '', keySource: 'none'}];
+  S.team = normalizeTeam(S.team);
+  S.team.agents[1].provider = 'litellm'; S.team.agents[1].model = 'gpt-6-luna';
+  S.runs.set('x8', {id: 'x8', agent: 'codex', room: 'general', chain: 's18', status: 'running', started: Date.now() - 64000, activity: '$ gh run list --workflow deploy-staging -L 20 --json timing', via: 'LiteLLM, gpt-6-luna', events: [
+    {t: Date.now() - 64000, k: 'start', x: 'new session in ~/code/shop via LiteLLM'}, {t: Date.now() - 51000, k: 'cmd', x: '$ gh run list --workflow deploy-staging -L 20'}], prompt: '(sample)', stderr: ''});
+}
+function preview(D) {
+  S.mode = 'preview'; S.humanName = 'You'; S.team = normalizeTeam(DEFAULT_TEAM()); sample();
+  document.body.classList.remove('booting');
+  $('#ta').disabled = true; $('#send').disabled = true;
+  $('#hint').textContent = 'This is a sample workspace. Install the app to talk to your own agents.';
+  banner(`<span style="flex:1;min-width:240px">This is a sample workspace. Agent Team runs your coding CLIs on this computer, so it works once installed as an app.</span>`, true);
+  D?.install?.state?.().then(st => {
+    if (st === 'available') { $('#banner').insertAdjacentHTML('beforeend', '<button class="btn primary" id="install">Install as App</button>'); $('#install').onclick = () => D.install.request().catch(() => {}); }
+    else if (st === 'installed') $('#banner').insertAdjacentHTML('beforeend', '<b>Installed. Open Agent Team from your Dock or Start menu.</b>');
+    else $('#banner').insertAdjacentHTML('beforeend', '<span>Open this artifact in the Claude desktop app to install it.</span>');
+  }).catch(() => {});
+  S.pane = innerWidth >= 1300 ? 'office' : null;
+  renderAll();
+}
+function gate(state) {
+  const g = $('#gate'); g.classList.add('open');
+  const hero = `<span class="hero">${officeHero()}</span>`;
+  const body = state === 'denied'
+    ? `${hero}<h3>Agent Team needs access to this Mac</h3><p>Access was turned off. Agent Team runs your coding CLIs and keeps channels in <code>~/.agent-team</code>, so it can't do anything without it.</p><div class="actions"><button class="btn primary" id="gbtn">Open Permissions</button></div>`
+    : state === 'unavailable'
+    ? `${hero}<h3>Can't get access yet</h3><p>Full access isn't available in this window right now. The Claude app may still be signing in, or another organization is selected.</p><div class="actions"><button class="btn primary" id="gbtn">Try Again</button></div>`
+    : `${hero}<h3>Let your agents work here</h3><p>Agent Team starts Claude Code, Codex and the rest on this computer when someone @mentions them, and keeps every channel as a file in <code>~/.agent-team</code>. No Slack, no server.</p><p>That needs access to run programs and write files. Notifications and a menu bar item are optional.</p><div class="actions"><button class="btn primary" id="gbtn">Allow Access</button></div>`;
+  $('#gatebody').innerHTML = body;
+  $('#gbtn').onclick = async () => {
+    try {
+      if (state === 'denied') await S.D.permissions.manage();
+      const st = state === 'unavailable' ? await S.D.permissions.state() : await S.D.permissions.request(['full-access', 'notifications', 'menu-bar']);
+      if (st['full-access'] === 'granted') { g.classList.remove('open'); start(); } else gate(st['full-access']);
+    } catch (e) { $('#gatebody').insertAdjacentHTML('beforeend', `<p class="err">${esc(e.message)}</p>`); }
+  };
+}
+async function start() {
+  S.mode = 'live'; const D = S.D;
+  try {
+    S.home = String(await D.os.homedir()).replace(/\\/g, '/').replace(/\/$/, '');
+    S.base = S.home + '/.agent-team';
+    const user = await D.os.username().catch(() => '');
+    S.osName = user ? user[0].toUpperCase() + user.slice(1) : '';
+    await D.fs.mkdir(S.base + '/rooms', {recursive: true}); await D.fs.mkdir(S.base + '/runs', {recursive: true});
+    const t = await readJSON(S.base + '/team.json');
+    S.team = normalizeTeam(t || DEFAULT_TEAM());
+    if (!t || t.version !== 2) await saveTeam(); else S.teamMtime = (await D.fs.stat(S.base + '/team.json')).mtimeMs;
+    if (!t) D.window.place({anchor: 'center', width: 1440, height: 900}).catch(() => {});
+    S.humanName = S.team.humanName || S.osName || 'You';
+    S.secrets = await readJSON(S.base + '/secrets.json') || {};
+    const st = await readJSON(S.base + '/state.json') || {};
+    S.sessions = st.sessions && typeof st.sessions === 'object' ? st.sessions : {};
+    S.lastSeen = st.lastSeen && typeof st.lastSeen === 'object' ? st.lastSeen : {};
+    ensureRooms();
+    for (const r of S.rooms.values()) await readRoom(r, true);
+  } catch (e) {
+    document.body.classList.remove('booting');
+    banner(`Agent Team couldn't open ~/.agent-team: ${e.message}`); return;
+  }
+  document.body.classList.remove('booting');
+  if (S.pane === undefined) S.pane = innerWidth >= 1300 ? 'office' : null;
+  renderAll();
+  $('#scroll').scrollTop = 1e9;
+  S.env = await captureEnv();
+  checkAvail(); setTray();
+  setInterval(poll, 1200);
+}
+async function boot() {
+  try { const w = +localStorage.getItem('at.paneW'); if (w > 300) S.paneW = w; const p = localStorage.getItem('at.pane'); if (p !== null) S.pane = p || null; } catch {}
+  let D = null;
+  try { D = await window.claude?.use?.('desktop'); } catch {}
+  S.D = D;
+  if (!D?.fs) return preview(D);
+  D.app.dock.setIcon(drawIcon()).catch(() => {});
+  S.platform = await D.os.platform().catch(() => 'darwin');
+  document.documentElement.classList.add('desk', 'os-' + S.platform);
+  D.window.setOptions({titleBarStyle: 'hiddenInset', dragHeight: 44, minWidth: 900, minHeight: 600, vibrancy: 'sidebar', visualEffectState: 'followWindow'})
+    .then(r => { if (S.platform === 'darwin' && r?.applied === 'now') document.documentElement.classList.add('vib'); }).catch(() => {});
+  const st = await D.permissions.state().catch(() => ({}));
+  document.body.classList.remove('booting');
+  if (st['full-access'] === 'granted') return start();
+  renderAll(); gate(st['full-access'] || 'prompt');
+}
+
+/* ---------- events ---------- */
+async function send() {
+  const ta = $('#ta'), raw = ta.value.trim(), room = cur();
+  if (!raw || S.mode !== 'live' || !room) return;
+  const add = [...S.toggles].filter(h => !mentions(raw).includes(h));
+  const text = (add.length ? add.map(h => '@' + h).join(' ') + ' ' : '') + raw;
+  ta.value = ''; S.toggles.clear(); grow(); renderTo(); closePop();
+  const id = uid();
+  const m = await post(room, {id, chain: id, from: 'human', kind: 'human', text, hop: 0});
+  route({...m, _fresh: true}, room);
+  $('#scroll').scrollTop = 1e9;
+}
+function grow() { const ta = $('#ta'); ta.style.height = 'auto'; ta.style.height = Math.min(260, ta.scrollHeight) + 'px'; $('#send').disabled = S.mode !== 'live' || !ta.value.trim(); }
+let popSel = 0, popItems = [];
+function closePop() { $('#pop').classList.remove('open'); popItems = []; }
+function openPop() {
+  const ta = $('#ta'), m = /(^|\s)@([\w-]*)$/.exec(ta.value.slice(0, ta.selectionStart));
+  if (!m) return closePop();
+  popItems = agents().filter(a => a.enabled && a.handle.startsWith(m[2].toLowerCase()));
+  if (!popItems.length) return closePop();
+  popSel = Math.min(popSel, popItems.length - 1);
+  $('#pop').innerHTML = popItems.map((a, i) => `<button type="button" role="option" data-pick-at="${esc(a.handle)}" aria-selected="${i === popSel}">${avatar(a.handle, 'sm')}<b>${esc(a.name)}</b> <small>@${esc(a.handle)}</small><span class="grow"></span><small>${esc(STAT[statusOf(a)] || '')}</small></button>`).join('');
+  $('#pop').classList.add('open');
+}
+function pickAt(h) {
+  const ta = $('#ta'), pos = ta.selectionStart, before = ta.value.slice(0, pos).replace(/@([\w-]*)$/, '@' + h + ' ');
+  ta.value = before + ta.value.slice(pos); ta.selectionStart = ta.selectionEnd = before.length; ta.focus(); closePop(); grow();
+}
+function fmt(kind) {
+  const ta = $('#ta'), s = ta.selectionStart, e = ta.selectionEnd, v = ta.value, sel = v.slice(s, e);
+  const wrap = {b: ['**', '**'], i: ['_', '_'], c: ['`', '`'], cb: ['```\n', '\n```']}[kind];
+  if (kind === 'at') { ta.setRangeText((s && !/\s$/.test(v.slice(0, s)) ? ' @' : '@'), s, e, 'end'); ta.focus(); openPop(); return grow(); }
+  ta.setRangeText(wrap[0] + sel + wrap[1], s, e, 'select'); ta.selectionStart = s + wrap[0].length; ta.selectionEnd = s + wrap[0].length + sel.length; ta.focus(); grow();
+}
+async function openDM(h) {
+  const a = agentBy(h); if (!a) return;
+  const id = 'dm-' + a.handle;
+  if (!S.rooms.has(id)) {
+    const r = {id, name: a.name, cwd: (cur() && !cur().dm ? cur().cwd : S.team.rooms.find(x => !x.dm)?.cwd) || '~', dm: a.handle};
+    S.team.rooms.push(r);
+    if (S.mode === 'live') { await saveTeam(); ensureRooms(); await readRoom(S.rooms.get(id), true); }
+    else S.rooms.set(id, {...r, messages: [], ids: new Set(), unread: 0});
+  }
+  S.view = 'home'; switchRoom(id); officeClose(); $('#ta').focus();
+}
+
+$('#form').addEventListener('submit', e => { e.preventDefault(); send(); });
+$('#ta').addEventListener('input', () => { grow(); openPop(); });
+$('#ta').addEventListener('keydown', e => {
+  if ($('#pop').classList.contains('open') && popItems.length) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); popSel = (popSel + (e.key === 'ArrowDown' ? 1 : -1) + popItems.length) % popItems.length; openPop(); return; }
+    if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); pickAt(popItems[popSel].handle); return; }
+    if (e.key === 'Escape') { closePop(); return; }
+  }
+  if ((e.metaKey || e.ctrlKey) && /^[bi]$/i.test(e.key)) { e.preventDefault(); fmt(e.key.toLowerCase()); return; }
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); }
+});
+let qTimer = 0;
+$('#q').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(() => { S.q = $('#q').value; if (S.q.trim().length >= 2) { S.pane = 'search'; S.officeFull = false; } else if (S.pane === 'search') S.pane = S.lastPane || null; renderPane(); renderHeader(); }, 160); });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Escape') { $('#q').value = ''; S.q = ''; if (S.pane === 'search') S.pane = S.lastPane || null; renderPane(); $('#q').blur(); } });
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === ',') { e.preventDefault(); openSettings(); }
+  else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('#q').focus(); }
+  else if (e.key === 'Escape' && S.sheetOpen) { if (S.detail) { S.detail = null; S.keepScroll = false; renderSheet(); } else closeSettings(); }
+  else if (e.key === 'Escape' && OFF.openId) officeClose();
+});
+$('#sheet').addEventListener('input', onSheetInput);
+$('#sheet').addEventListener('change', onSheetInput);
+$('#sheet').addEventListener('mousedown', e => { if (e.target.id === 'sheet') closeSettings(); });
+$('#divider').addEventListener('pointerdown', e => {
+  e.preventDefault(); const pane = $('#pane'); $('#divider').setPointerCapture(e.pointerId);
+  const move = ev => { S.paneW = Math.round(Math.max(340, Math.min(innerWidth - 700, innerWidth - ev.clientX))); pane.style.width = S.paneW + 'px'; };
+  const up = () => { $('#divider').removeEventListener('pointermove', move); $('#divider').removeEventListener('pointerup', up); try { localStorage.setItem('at.paneW', S.paneW); } catch {} };
+  $('#divider').addEventListener('pointermove', move); $('#divider').addEventListener('pointerup', up);
+});
+document.addEventListener('click', async e => {
+  const bub = e.target.closest('[data-clamp]'); if (bub && !e.target.closest('a,button')) { bub.classList.toggle('full'); bub.querySelector('.clamp').style.webkitLineClamp = bub.classList.contains('full') ? 'unset' : ''; return; }
+  const t = e.target.closest('button'); if (!t) return;
+  const d = t.dataset;
+  if (d.room) { S.view = 'home'; switchRoom(d.room); }
+  else if (d.dm) openDM(d.dm);
+  else if (d.jump) { S.view = 'home'; switchRoom(d.jump); if (d.msg) requestAnimationFrame(() => document.querySelector(`[data-id="${CSS.escape(d.msg)}"]`)?.scrollIntoView({block: 'center'})); }
+  else if (d.view) { if (d.view === 'office') setPane('office'); else { S.view = d.view; renderSidebar(); } }
+  else if (d.sec) { S.closedSecs.has(d.sec) ? S.closedSecs.delete(d.sec) : S.closedSecs.add(d.sec); renderSidebar(); }
+  else if (d.to) { S.toggles.has(d.to) ? S.toggles.delete(d.to) : S.toggles.add(d.to); renderTo(); $('#ta').focus(); }
+  else if (d.pickAt) pickAt(d.pickAt);
+  else if (d.fmt) fmt(d.fmt);
+  else if (d.fold) { S.expanded.has(d.fold) ? S.expanded.delete(d.fold) : S.expanded.add(d.fold); renderFeed(); }
+  else if (d.reply) { const ta = $('#ta'); ta.value = `@${d.reply} ` + ta.value.replace(/^@\S+\s/, ''); ta.focus(); grow(); }
+  else if (d.copymsg) { const m = cur()?.messages.find(x => x.id === d.copymsg); if (m) navigator.clipboard?.writeText(m.text).catch(() => {}); }
+  else if (d.log) { await loadRun(d.log); S.logRun = d.log; S.pane = 'runs'; S.officeFull = false; renderPane(); renderHeader(); }
+  else if (d.pick) { S.logRun = d.pick; renderLog(); }
+  else if (d.pane) { S.pane = d.pane; if (d.pane !== 'search') S.lastPane = d.pane; if (d.pane !== 'office') S.officeFull = false; renderPane(); renderHeader(); renderSidebar(); try { localStorage.setItem('at.pane', S.pane); } catch {} }
+  else if (d.stop) stopRun(d.stop);
+  else if (d.continue) { const room = cur(), m = room.messages.find(x => x.id === d.continue); if (m) { route(m, room, true); t.disabled = true; t.textContent = 'Continued'; } }
+  else if (d.reveal) S.D.shell.showItemInFolder(`${S.base}/runs/${d.reveal}/prompt.md`).catch(() => {});
+  else if (d.open) openSettings(d.open);
+  else if (d.tab) { S.tab = d.tab; S.detail = null; S.keepScroll = false; renderSheet(); }
+  else if (d.back != null) { S.detail = null; S.keepScroll = false; renderSheet(); }
+  else if (d.openAgent != null) { S.detail = {k: 'agent', i: +d.openAgent}; S.keepScroll = false; renderSheet(); }
+  else if (d.openAgentH) { const i = S.team.agents.findIndex(a => a.handle === d.openAgentH); openSettings('teammates', i >= 0 ? {k: 'agent', i} : null); }
+  else if (d.openProv) { S.detail = {k: 'prov', id: d.openProv}; S.keepScroll = false; renderSheet(); }
+  else if (d.segp) { setPath(S.draft, d.segp, d.segv); renderSheet(); }
+  else if (d.rmAgent != null) { S.draft.agents.splice(+d.rmAgent, 1); S.detail = null; renderSheet(); }
+  else if (d.rmProv != null) { const p = S.draft.providers.splice(+d.rmProv, 1)[0]; for (const a of S.draft.agents) if (a.provider === p.id) a.provider = 'subscription'; S.draftSecrets[p.id] = null; S.detail = null; renderSheet(); }
+  else if (d.rmRoom != null) { S.draft.rooms.splice(+d.rmRoom, 1); renderSheet(); }
+  else if (d.ptest) testProvider(d.ptest);
+  else if (d.forget) { S.draftSecrets[d.forget] = null; renderSheet(); }
+  else if (d.copy) { navigator.clipboard?.writeText(d.copy).catch(() => {}); t.textContent = 'copied'; setTimeout(() => { t.textContent = d.copy; }, 900); }
+  else if (d.oagent || d.oview) officeOpen(d.oagent || d.oview);
+  else if (d.oclose != null) officeClose();
+  else if (d.od) { const el = document.getElementById(d.od), was = el.classList.contains('open-d'); document.querySelectorAll('.open-d').forEach(x => x.classList.remove('open-d')); if (!was) el.classList.add('open-d'); }
+  else if (t.classList.contains('o-chead')) t.parentElement.classList.toggle('open');
+  else if (t.id === 'o-tour') { OFF.touring = !OFF.touring; t.classList.toggle('on', OFF.touring); t.setAttribute('aria-pressed', OFF.touring); $('#o-tourIcon').textContent = OFF.touring ? '■' : '▶'; OFF.scene?.setTour(OFF.touring); }
+  else if (t.id === 'o-zin') OFF.scene?.zoomBy(1.2);
+  else if (t.id === 'o-zout') OFF.scene?.zoomBy(1 / 1.2);
+  else if (t.id === 'addmate') {
+    const k = $('#addcli').value, pr = CLIS[k].preset, hs = new Set(S.draft.agents.map(a => a.handle));
+    let h = pr.handle, n = 2; while (hs.has(h)) h = pr.handle + n++;
+    S.draft.agents.push({...clone(pr), handle: h, name: hs.has(pr.handle) ? `${pr.name} ${n - 1}` : pr.name, kind: k, role: 'worker', mode: 'spawn', enabled: true, provider: 'subscription', model: '', cwd: '', color: PALETTE[S.draft.agents.length % PALETTE.length]});
+    S.detail = {k: 'agent', i: S.draft.agents.length - 1}; S.keepScroll = false; renderSheet();
+  }
+  else if (t.id === 'addprovbtn') {
+    const k = $('#addprov').value, ids = new Set(providersOf(S.draft).map(p => p.id));
+    let id = slug(k), n = 2; while (ids.has(id)) id = slug(k) + '-' + n++;
+    S.draft.providers.push({id, kind: k, name: KINDS[k].name + (n > 2 ? ' ' + (n - 1) : ''), baseUrl: k === 'litellm' ? 'http://localhost:4000' : '', project: '', region: 'global', credentials: '', protocol: 'anthropic', authHeader: 'bearer',
+      keySource: KINDS[k].key ? 'env' : 'none', keyEnv: {litellm: 'LITELLM_API_KEY', anthropic: 'ANTHROPIC_API_KEY', openai: 'OPENAI_API_KEY'}[k] || '', keyCmd: '', envText: '', models: []});
+    S.detail = {k: 'prov', id}; S.keepScroll = false; renderSheet();
+  }
+  else if (t.id === 'addroombtn') {
+    const name = $('#addroomname').value.trim(), id = slug(name, 40);
+    if (!id || S.draft.rooms.some(r => r.id === id)) { $('#serr').textContent = id ? 'That channel exists.' : 'Give the channel a name.'; return; }
+    S.draft.rooms.push({id, name: id, cwd: $('#addroomcwd').value.trim() || '~'}); renderSheet();
+  }
+  else if (t.id === 'ssave') saveSettings();
+  else if (t.id === 'scancel') closeSettings();
+  else if (t.id === 'setbtn' || t.id === 'wsname') openSettings(t.id === 'wsname' ? 'general' : undefined);
+  else if (t.id === 'members') openSettings('teammates');
+  else if (t.id === 'opendata') S.D.shell.openPath(S.base).catch(() => {});
+  else if (t.id === 'recheck') { S.env = await captureEnv(); checkAvail(); }
+  else if (t.id === 'pause') togglePause();
+  else if (t.id === 'runsbtn') setPane('runs');
+  else if (t.id === 'officebtn') setPane('office');
+  else if (t.id === 'paneclose') { S.pane = null; S.officeFull = false; renderPane(); renderHeader(); renderSidebar(); try { localStorage.setItem('at.pane', ''); } catch {} }
+  else if (t.id === 'paneexpand') { S.officeFull = !S.officeFull; renderPane(); setTimeout(() => OFF.scene?.resize?.(), 30); }
+  else if (t.id === 'folder' && S.mode === 'live') S.D.shell.openPath(expand(cur().cwd)).catch(err => banner(`Can't open ${cur().cwd}: ${err.message}`));
+  else if (t.id === 'newroom' || t.id === 'newroom2') { S.view = 'home'; renderSidebar(); showNewRoom(); }
+});
+document.addEventListener('click', e => { if (e.target.id === 'o-detback') officeClose(); });
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'nrform') return;
+  e.preventDefault(); if (S.mode !== 'live') return;
+  const f = e.target, name = f.name.value.trim(), cwd = f.cwd.value.trim() || '~', id = slug(name, 40);
+  if (!id) { $('#nrerr').textContent = 'Give it a name.'; return; }
+  if (S.rooms.has(id)) { $('#nrerr').textContent = 'That channel exists.'; return; }
+  if (!(await S.D.fs.exists(expand(cwd)).catch(() => false))) { $('#nrerr').textContent = `${cwd} doesn't exist.`; return; }
+  S.team.rooms.push({id, name: id, cwd}); await saveTeam(); ensureRooms();
+  await readRoom(S.rooms.get(id), true); S.room = id; S.newRoom = false; renderAll();
+});
+window.addEventListener('focus', () => { const r = cur(); if (r?.unread) { r.unread = 0; renderSidebar(); } badge(); });
+setInterval(() => { for (const n of document.querySelectorAll('[data-start]')) n.textContent = el(Date.now() - +n.dataset.start); }, 1000);
+
+boot();
+}
+</script>
+</body>
+</html>

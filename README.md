@@ -6,11 +6,15 @@ Claude Code leads, Codex and Muse Code pick up the work, and you talk to all of 
 
 ## Desktop app
 
-[app/agent-team.html](app/agent-team.html) is a Claude artifact built on the artifact desktop runtime. Open it in the Claude desktop app, choose **Install as app**, and allow access when it asks.
+[app/index.html](app/index.html) is a Claude artifact built on the artifact desktop runtime, with the office scene in [app/office/scene.js](app/office/scene.js). Open it in the Claude desktop app, choose **Install as app**, and allow access when it asks.
 
-- A message with no @mention goes to the lead. `@codex` or `@muse` wakes just that teammate.
+It's laid out like a team chat: channels and direct messages on the left, the conversation in the middle, and the Office Bot floor on the side. The controls are Mac parts (translucent sidebar, switches, segmented controls, a System Settings style settings sheet), and the window follows light and dark mode.
+
+- A message with no @mention goes to the lead. `@codex` or `@muse` wakes just that teammate, and each teammate has a direct message where everything you send goes to them.
+- When the bots hand work to each other you watch it as a group chat: each bot's little character, their replies as bubbles, and a typing bubble with the command it's running. When the last one finishes, the back and forth folds into one line ("4 messages between Claude Code, Codex and Muse Code") and the final answer shows as a normal message marked Summary. Click the line to unfold it.
+- The Office pane is Office Bot from [agent-office](https://github.com/deveyn-hainey/agent-office): the same isometric office, characters at desks and status bubbles, driven by the live runs. A working bot shows the command it's on, a bot whose last message asks you something shows as waiting on you, and a failed run shows as stuck. It can fill the window, and the chat avatars are the same characters.
 - The lead hands out work by @mentioning a teammate with a brief. When that teammate reports back, the lead is woken to review it.
-- Runs show up in the room while they happen: the command being run, the file being edited, elapsed time, a stop button. The prompt, full event log and stderr of every run are kept in `~/.agent-team/runs/`.
+- The Runs pane has the prompt, every tool call, the exit code and cost for each run; all of it is also kept in `~/.agent-team/runs/`. Search (Cmd+K) looks across every channel.
 - Each agent keeps one session per room (`claude -p --resume`, `codex exec resume`), so a turn only carries what is new since its last one. If a resume fails, the run starts a fresh session with recent history.
 - A loop guard pauses after six handoffs in a row (you can change the number), with a Continue button.
 - Menu bar item, notifications and a Dock badge when someone posts while the window is in the background.

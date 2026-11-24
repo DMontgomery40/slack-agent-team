@@ -14,7 +14,7 @@ files = sorted({ROOT / name for name in tracked.decode().split('\0') if name and
 required = ['SKILL.md', 'README.md', 'LICENSE', 'agents/openai.yaml',
             'assets/TEAM_CONTEXT.template.md', 'references/listeners.md', 'references/identity.md',
             'scripts/slack.py', 'tests/test_slack.py', 'scripts/team.py', 'tests/test_team.py',
-            'app/agent-team.html']
+            'app/index.html', 'app/office/scene.js']
 for name in required:
     if not (ROOT / name).is_file():
         errors.append('Missing file: ' + name)
