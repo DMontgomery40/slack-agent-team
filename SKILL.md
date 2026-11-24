@@ -19,7 +19,7 @@ If the lead or membership is still unknown after inspection, ask for the missing
 
 ## 2. Connect delivery and delegation
 
-Read [listeners.md](references/listeners.md) before changing message delivery. Preserve an existing working Monitor without adding a recurring model check.
+For a team that doesn't use Slack, the Agent Team desktop app is the room ([README](README.md#desktop-app)): its room files and [team.py](scripts/team.py) replace the Slack watcher and poster, and the app starts workers when they are mentioned. Otherwise, read [listeners.md](references/listeners.md) before changing message delivery. Preserve an existing working Monitor without adding a recurring model check.
 
 Reproduce the route actually chosen for each participant. A task worker can receive its brief from the lead without having a Slack listener. Treat mention-triggered workers, vendor-managed bots, other harnesses and push transports as separate routes requiring their own verification. Inspect installed CLI help and local settings before invoking a worker; retain the user's model, tools and permission choices.
 

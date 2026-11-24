@@ -13,7 +13,8 @@ tracked = subprocess.check_output(['git', 'ls-files', '-z', '--cached', '--other
 files = sorted({ROOT / name for name in tracked.decode().split('\0') if name and (ROOT / name).is_file()})
 required = ['SKILL.md', 'README.md', 'LICENSE', 'agents/openai.yaml',
             'assets/TEAM_CONTEXT.template.md', 'references/listeners.md', 'references/identity.md',
-            'scripts/slack.py', 'tests/test_slack.py']
+            'scripts/slack.py', 'tests/test_slack.py', 'scripts/team.py', 'tests/test_team.py',
+            'app/agent-team.html']
 for name in required:
     if not (ROOT / name).is_file():
         errors.append('Missing file: ' + name)
